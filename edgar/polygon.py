@@ -147,11 +147,12 @@ def fetch_last_5_working_days_prices(ticker: str = 'AAPL', api_key: Optional[str
         now = datetime.now(timezone.utc).isoformat()
         state = {
             'timestamp': now,
+            'ticker': ticker,
             'prices': prices,
             'last_fetch_timestamp': now
         }
         
-        save_prices_state(state)
+        save_prices_state(state, ticker)
         
         log.info(f"Successfully fetched {len(prices)} price records for {ticker}")
         return state
@@ -184,35 +185,41 @@ def get_polygon_api_key() -> str:
     return api_key
 
 
-def get_prices_state_path() -> Path:
+def get_prices_state_path(ticker: str = 'AAPL') -> Path:
     """
-    Get the path to the prices state file.
+    Get the path to the prices state file for a given ticker.
+    
+    Args:
+        ticker: Stock ticker symbol (default: 'AAPL')
     
     Returns:
-        Path: The absolute path to prices_state.json in the project data directory
+        Path: The absolute path to prices_{ticker}.json in the project data directory
     """
     module_dir = Path(__file__).parent
     project_root = module_dir.parent
-    data_dir = project_root / 'data' / 'prices_state.json'
+    data_dir = project_root / 'data' / f'prices_{ticker}.json'
     return data_dir
 
 
-def get_prices_state() -> Dict[str, Any]:
+def get_prices_state(ticker: str = 'AAPL') -> Dict[str, Any]:
     """
-    Load the prices state from file.
+    Load the prices state from file for a given ticker.
+    
+    Args:
+        ticker: Stock ticker symbol (default: 'AAPL')
     
     Returns:
         dict: The state dictionary with keys: timestamp, prices, last_fetch_timestamp
         Returns empty state if file doesn't exist.
     """
-    state_path = get_prices_state_path()
+    state_path = get_prices_state_path(ticker)
     
     if state_path.exists():
         try:
             with open(state_path, 'r') as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
-            log.warning(f"Could not read prices state file: {e}")
+            log.warning(f"Could not read prices state file for {ticker}: {e}")
             return get_empty_state()
     
     return get_empty_state()
@@ -232,21 +239,22 @@ def get_empty_state() -> Dict[str, Any]:
     }
 
 
-def save_prices_state(state: Dict[str, Any]) -> None:
+def save_prices_state(state: Dict[str, Any], ticker: str = 'AAPL') -> None:
     """
-    Save the prices state to file.
+    Save the prices state to file for a given ticker.
     
     Args:
         state: Dictionary containing timestamp, prices, and last_fetch_timestamp
+        ticker: Stock ticker symbol (default: 'AAPL')
     """
-    state_path = get_prices_state_path()
+    state_path = get_prices_state_path(ticker)
     
     try:
         with open(state_path, 'w') as f:
             json.dump(state, f, indent=2)
         log.info(f"Prices state saved to {state_path}")
     except IOError as e:
-        error_msg = f"Failed to save prices state: {e}"
+        error_msg = f"Failed to save prices state for {ticker}: {e}"
         log.error(error_msg)
         error_logger.error(error_msg)
         raise PolygonAPIError(error_msg)
@@ -368,45 +376,52 @@ def fetch_aapl_last_7_days(api_key: Optional[str] = None) -> Dict[str, Any]:
     return fetch_aapl_prices(ticker='AAPL', days=7, api_key=api_key)
 
 
-def get_alerts_path() -> Path:
+def get_alerts_path(ticker: str = 'AAPL') -> Path:
     """
-    Get the path to the alerts file.
+    Get the path to the alerts file for a given ticker.
+    
+    Args:
+        ticker: Stock ticker symbol (default: 'AAPL')
     
     Returns:
-        Path: The absolute path to alerts.json in the project data directory
+        Path: The absolute path to alerts_{ticker}.json in the project data directory
     """
     module_dir = Path(__file__).parent
     project_root = module_dir.parent
-    data_dir = project_root / 'data' / 'alerts.json'
+    data_dir = project_root / 'data' / f'alerts_{ticker}.json'
     return data_dir
 
 
-def save_alerts(alerts: Dict[str, Any]) -> None:
+def save_alerts(alerts: Dict[str, Any], ticker: str = 'AAPL') -> None:
     """
-    Save the alerts to file.
+    Save the alerts to file for a given ticker.
     
     Args:
         alerts: Dictionary containing alert information
+        ticker: Stock ticker symbol (default: 'AAPL')
     """
-    alerts_path = get_alerts_path()
+    alerts_path = get_alerts_path(ticker)
     
     try:
         with open(alerts_path, 'w') as f:
             json.dump(alerts, f, indent=2)
         log.info(f"Alerts saved to {alerts_path}")
     except IOError as e:
-        error_msg = f"Failed to save alerts: {e}"
+        error_msg = f"Failed to save alerts for {ticker}: {e}"
         log.error(error_msg)
         error_logger.error(error_msg)
         raise PolygonAPIError(error_msg)
 
 
-def detect_price_drop_alert() -> Dict[str, Any]:
+def detect_price_drop_alert(ticker: str = 'AAPL') -> Dict[str, Any]:
     """
-    Detect price drop alerts based on prices_state.json data.
+    Detect price drop alerts based on prices data for a given ticker.
     
-    Reads prices_state.json and calculates 7-day price change.
+    Reads prices data and calculates price change.
     Alert triggers if drop >= 5%.
+    
+    Args:
+        ticker: Stock ticker symbol (default: 'AAPL')
     
     Returns:
         dict: Alert information with structure:
@@ -419,11 +434,11 @@ def detect_price_drop_alert() -> Dict[str, Any]:
             }
             
     Raises:
-        ValueError: If prices_state.json is missing or malformed
+        ValueError: If prices state is missing or malformed
         PolygonAPIError: If there are file access issues
     """
     # Load prices state
-    state_path = get_prices_state_path()
+    state_path = get_prices_state_path(ticker)
     
     # Check if file exists
     if not state_path.exists():
@@ -433,9 +448,9 @@ def detect_price_drop_alert() -> Dict[str, Any]:
     
     # Load and validate state
     try:
-        state = get_prices_state()
+        state = get_prices_state(ticker)
     except Exception as e:
-        error_msg = f"Failed to read or parse prices_state.json: {e}"
+        error_msg = f"Failed to read or parse prices state for {ticker}: {e}"
         log.error(error_msg)
         raise ValueError(error_msg)
     
@@ -523,6 +538,6 @@ def detect_price_drop_alert() -> Dict[str, Any]:
     log.info(f"Price drop analysis: {drop_percentage:.2f}% change, alert_triggered={alert_triggered}")
     
     # Save alert
-    save_alerts(alert)
+    save_alerts(alert, ticker)
     
     return alert

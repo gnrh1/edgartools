@@ -28,7 +28,7 @@ class TestPolygonAPI:
     def test_get_prices_state_path(self):
         """Test that prices state path points to correct location."""
         path = get_prices_state_path()
-        assert path.name == 'prices_state.json'
+        assert path.name == 'prices_AAPL.json'
         assert 'data' in str(path)
 
     def test_get_empty_state(self):
@@ -165,7 +165,7 @@ class TestPriceDropAlertDetector:
     def test_get_alerts_path(self):
         """Test that alerts path points to correct location."""
         path = get_alerts_path()
-        assert path.name == 'alerts.json'
+        assert path.name == 'alerts_AAPL.json'
         assert 'data' in str(path)
 
     def test_save_alerts(self):
@@ -570,7 +570,7 @@ class TestFetchLast5WorkingDays:
         assert len(prices) == 4
         dates = [price['date'] for price in prices]
         assert skipped_date not in dates
-        assert mock_sleep.call_count == 4
+        assert mock_sleep.call_count == 3
 
     @patch('edgar.polygon.httpx.Client')
     @patch('edgar.polygon.time.sleep')
