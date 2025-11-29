@@ -16,7 +16,7 @@ import httpx
 
 from edgar.core import log
 
-__all__ = ['fetch_aapl_prices', 'fetch_aapl_last_7_days', 'get_prices_state', 'save_prices_state', 'PolygonAPIError', 'get_prices_state_path']
+__all__ = ['fetch_aapl_prices', 'fetch_aapl_last_7_days', 'get_prices_state', 'save_prices_state', 'PolygonAPIError', 'get_prices_state_path', 'detect_price_drop_alert', 'get_alerts_path', 'save_alerts']
 
 
 # Set up error logging
@@ -238,3 +238,163 @@ def fetch_aapl_last_7_days(api_key: Optional[str] = None) -> Dict[str, Any]:
         PolygonAPIError: If API call fails
     """
     return fetch_aapl_prices(ticker='AAPL', days=7, api_key=api_key)
+
+
+def get_alerts_path() -> Path:
+    """
+    Get the path to the alerts file.
+    
+    Returns:
+        Path: The absolute path to alerts.json in the project data directory
+    """
+    module_dir = Path(__file__).parent
+    project_root = module_dir.parent
+    data_dir = project_root / 'data' / 'alerts.json'
+    return data_dir
+
+
+def save_alerts(alerts: Dict[str, Any]) -> None:
+    """
+    Save the alerts to file.
+    
+    Args:
+        alerts: Dictionary containing alert information
+    """
+    alerts_path = get_alerts_path()
+    
+    try:
+        with open(alerts_path, 'w') as f:
+            json.dump(alerts, f, indent=2)
+        log.info(f"Alerts saved to {alerts_path}")
+    except IOError as e:
+        error_msg = f"Failed to save alerts: {e}"
+        log.error(error_msg)
+        error_logger.error(error_msg)
+        raise PolygonAPIError(error_msg)
+
+
+def detect_price_drop_alert() -> Dict[str, Any]:
+    """
+    Detect price drop alerts based on prices_state.json data.
+    
+    Reads prices_state.json and calculates 7-day price change.
+    Alert triggers if drop >= 5%.
+    
+    Returns:
+        dict: Alert information with structure:
+            {
+                'alert_triggered': bool,
+                'price_first_close': float,
+                'price_last_close': float,
+                'drop_percentage': float,
+                'reason': str
+            }
+            
+    Raises:
+        ValueError: If prices_state.json is missing or malformed
+        PolygonAPIError: If there are file access issues
+    """
+    # Load prices state
+    state_path = get_prices_state_path()
+    
+    # Check if file exists
+    if not state_path.exists():
+        error_msg = f"prices_state.json not found at {state_path}. Please run price fetching first."
+        log.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Load and validate state
+    try:
+        state = get_prices_state()
+    except Exception as e:
+        error_msg = f"Failed to read or parse prices_state.json: {e}"
+        log.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Check if we got empty state (indicating parsing failure)
+    if not state.get('prices') and state_path.exists():
+        # Try to read the file directly to detect parsing errors
+        try:
+            with open(state_path, 'r') as f:
+                content = f.read()
+                json.loads(content)  # This will raise JSONDecodeError if malformed
+        except (json.JSONDecodeError, IOError) as e:
+            error_msg = f"Failed to read or parse prices_state.json: {e}"
+            log.error(error_msg)
+            raise ValueError(error_msg)
+    
+    # Validate state structure
+    if not isinstance(state, dict) or 'prices' not in state:
+        error_msg = "prices_state.json has invalid structure: missing 'prices' field"
+        log.error(error_msg)
+        raise ValueError(error_msg)
+    
+    prices = state['prices']
+    
+    # Check minimum data points requirement
+    if not isinstance(prices, list) or len(prices) < 5:
+        reason = "insufficient_data"
+        log.warning(f"Insufficient price data: {len(prices) if isinstance(prices, list) else 0} points (minimum 5 required)")
+        return {
+            'alert_triggered': False,
+            'price_first_close': 0.0,
+            'price_last_close': 0.0,
+            'drop_percentage': 0.0,
+            'reason': reason
+        }
+    
+    # Validate price data structure
+    try:
+        # Sort prices by date to ensure chronological order
+        sorted_prices = sorted(prices, key=lambda p: p['date'])
+        
+        # Get first and last close prices
+        first_price = sorted_prices[0]
+        last_price = sorted_prices[-1]
+        
+        if 'close' not in first_price or 'close' not in last_price:
+            error_msg = "Price data missing 'close' field"
+            log.error(error_msg)
+            raise ValueError(error_msg)
+        
+        price_first_close = float(first_price['close'])
+        price_last_close = float(last_price['close'])
+        
+        # Validate price values
+        if price_first_close <= 0:
+            error_msg = f"Invalid first close price: {price_first_close} (must be > 0)"
+            log.error(error_msg)
+            raise ValueError(error_msg)
+        
+    except (KeyError, TypeError, ValueError) as e:
+        error_msg = f"Invalid price data structure: {e}"
+        log.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Calculate drop percentage
+    drop_percentage = ((price_first_close - price_last_close) / price_first_close) * 100
+    
+    # Determine if alert should trigger
+    alert_triggered = drop_percentage >= 5.0
+    
+    # Generate reason
+    if alert_triggered:
+        reason = f"price_drop_{drop_percentage:.2f}%"
+    else:
+        reason = f"price_change_{drop_percentage:.2f}%"
+    
+    # Create alert
+    alert = {
+        'alert_triggered': alert_triggered,
+        'price_first_close': price_first_close,
+        'price_last_close': price_last_close,
+        'drop_percentage': drop_percentage,
+        'reason': reason
+    }
+    
+    log.info(f"Price drop analysis: {drop_percentage:.2f}% change, alert_triggered={alert_triggered}")
+    
+    # Save alert
+    save_alerts(alert)
+    
+    return alert

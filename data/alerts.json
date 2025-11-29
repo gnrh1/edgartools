@@ -1,0 +1,7 @@
+{
+  "alert_triggered": true,
+  "price_first_close": 235.5,
+  "price_last_close": 223.1,
+  "drop_percentage": 5.265392781316351,
+  "reason": "price_drop_5.27%"
+}
