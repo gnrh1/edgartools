@@ -1,0 +1,23 @@
+# Netlify configuration for AAPL Price Dashboard
+[build]
+  # No build command needed - static HTML
+  publish = "."
+  
+[[redirects]]
+  # Redirect root to dashboard
+  from = "/"
+  to = "/dashboard.html"
+  status = 200
+
+[[headers]]
+  # Cache control for data files
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  # Cache control for dashboard
+  for = "/dashboard.html"
+  [headers.values]
+    Cache-Control = "public, max-age=600, must-revalidate"
