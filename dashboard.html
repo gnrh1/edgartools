@@ -191,9 +191,7 @@
 
     <script>
         // Configuration
-        const DATA_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? './data' 
-            : 'https://raw.githubusercontent.com/dgunning/edgartools/main/data';
+        const DATA_BASE_URL = '/data';
 
         async function loadData() {
             try {
