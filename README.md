@@ -92,6 +92,17 @@ ownership = insider_filing.obj()
 - [GitHub Issues](https://github.com/dgunning/edgartools/issues) - Bug reports and feature requests
 - [Discussions](https://github.com/dgunning/edgartools/discussions) - Questions and community discussions
 
+## 📊 Live Dashboard
+
+EdgarTools includes a **real-time stock price monitoring dashboard** with automated weekly updates:
+
+- 🔴 **Alert System**: Automatic notifications when AAPL drops 5%+ in 7 days
+- 📈 **Live Data**: Weekly price updates via GitHub Actions cron
+- 🌐 **Netlify Deployed**: View live at your deployed URL
+- 🔄 **Automated Pipeline**: Fetches prices from Polygon.io and detects alerts
+
+[🚀 Quick Start (5 min)](DASHBOARD_QUICKSTART.md) | [📖 Full Deployment Guide](DEPLOYMENT.md) | [📊 View Dashboard](dashboard.html)
+
 ## 🔮 Roadmap
 
 - **Coming Soon**: Enhanced visualization tools for financial data

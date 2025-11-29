@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAPL Stock Price Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .dashboard {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .header .ticker {
+            font-size: 1.2rem;
+            color: #718096;
+            font-weight: 600;
+        }
+
+        .alert-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .alert-status.alert-triggered {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(245, 101, 101, 0.4);
+        }
+
+        .alert-status.no-alert {
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+            color: white;
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .alert-status .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .price-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .price-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .price-card .label {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-card .value {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .price-card .value.negative {
+            color: #e53e3e;
+        }
+
+        .price-card .value.positive {
+            color: #38a169;
+        }
+
+        .drop-percentage {
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .drop-percentage .label {
+            color: #718096;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .drop-percentage .value {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+
+        .drop-percentage .value.drop {
+            color: #e53e3e;
+        }
+
+        .drop-percentage .value.rise {
+            color: #38a169;
+        }
+
+        .metadata {
+            text-align: center;
+            color: #a0aec0;
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .loading {
+            text-align: center;
+            color: #718096;
+            font-size: 1.2rem;
+            padding: 40px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .drop-percentage .value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>📈 Stock Price Monitor</h1>
+            <div class="ticker">AAPL - Apple Inc.</div>
+        </div>
+        
+        <div id="content">
+            <div class="loading">Loading data...</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const DATA_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? './data' 
+            : 'https://raw.githubusercontent.com/dgunning/edgartools/main/data';
+
+        async function loadData() {
+            try {
+                // Load both files in parallel
+                const [pricesResponse, alertsResponse] = await Promise.all([
+                    fetch(`${DATA_BASE_URL}/prices_state.json`),
+                    fetch(`${DATA_BASE_URL}/alerts.json`)
+                ]);
+
+                if (!pricesResponse.ok || !alertsResponse.ok) {
+                    throw new Error('Failed to load data files');
+                }
+
+                const pricesData = await pricesResponse.json();
+                const alertsData = await alertsResponse.json();
+
+                displayDashboard(pricesData, alertsData);
+            } catch (error) {
+                displayError(error.message);
+            }
+        }
+
+        function displayDashboard(pricesData, alertsData) {
+            const prices = pricesData.prices || [];
+            
+            if (prices.length === 0) {
+                displayError('No price data available');
+                return;
+            }
+
+            // Sort prices by date to ensure chronological order
+            const sortedPrices = [...prices].sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            const firstPrice = sortedPrices[0].close;
+            const lastPrice = sortedPrices[sortedPrices.length - 1].close;
+            const dropPercentage = alertsData.drop_percentage || 0;
+            const alertTriggered = alertsData.alert_triggered || false;
+
+            // Format timestamp
+            const lastUpdate = pricesData.last_fetch_timestamp 
+                ? new Date(pricesData.last_fetch_timestamp).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'UTC',
+                    timeZoneName: 'short'
+                })
+                : 'Unknown';
+
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="alert-status ${alertTriggered ? 'alert-triggered' : 'no-alert'}">
+                    <div class="icon">${alertTriggered ? '🔴' : '🟢'}</div>
+                    <div>${alertTriggered ? 'ALERT TRIGGERED' : 'NO ALERT'}</div>
+                    <div style="font-size: 0.9rem; margin-top: 5px; opacity: 0.9;">
+                        ${alertsData.reason || ''}
+                    </div>
+                </div>
+
+                <div class="price-grid">
+                    <div class="price-card">
+                        <div class="label">7 Days Ago</div>
+                        <div class="value">$${firstPrice.toFixed(2)}</div>
+                    </div>
+                    <div class="price-card">
+                        <div class="label">Latest Close</div>
+                        <div class="value">$${lastPrice.toFixed(2)}</div>
+                    </div>
+                </div>
+
+                <div class="drop-percentage">
+                    <div class="label">Price Change (7 Days)</div>
+                    <div class="value ${dropPercentage >= 0 ? 'drop' : 'rise'}">
+                        ${dropPercentage >= 0 ? '▼' : '▲'} ${Math.abs(dropPercentage).toFixed(2)}%
+                    </div>
+                </div>
+
+                <div class="metadata">
+                    <div><strong>Last updated:</strong> ${lastUpdate}</div>
+                    <div style="margin-top: 5px;"><strong>Data points:</strong> ${prices.length}</div>
+                    ${alertTriggered ? `
+                        <div style="margin-top: 10px; color: #e53e3e; font-weight: bold;">
+                            ⚠️ Price dropped ${dropPercentage.toFixed(2)}% (threshold: 5%)
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function displayError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">⚠️</div>
+                    <div><strong>Error:</strong> ${message}</div>
+                    <div style="margin-top: 10px; font-size: 0.9rem;">
+                        Please ensure prices_state.json and alerts.json are available.
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load data on page load
+        loadData();
+
+        // Refresh data every 5 minutes
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
