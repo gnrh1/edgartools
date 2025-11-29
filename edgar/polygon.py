@@ -8,7 +8,8 @@ manage state persistence, and handle errors gracefully.
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -16,7 +17,7 @@ import httpx
 
 from edgar.core import log
 
-__all__ = ['fetch_aapl_prices', 'fetch_aapl_last_7_days', 'get_prices_state', 'save_prices_state', 'PolygonAPIError', 'get_prices_state_path', 'detect_price_drop_alert', 'get_alerts_path', 'save_alerts']
+__all__ = ['fetch_aapl_prices', 'fetch_aapl_last_7_days', 'get_prices_state', 'save_prices_state', 'PolygonAPIError', 'get_prices_state_path', 'detect_price_drop_alert', 'get_alerts_path', 'save_alerts', 'get_last_5_working_days', 'fetch_last_5_working_days_prices']
 
 
 # Set up error logging
@@ -35,6 +36,117 @@ if not error_logger.handlers:
 class PolygonAPIError(Exception):
     """Exception raised for Polygon API errors."""
     pass
+
+
+def get_last_5_working_days() -> List[str]:
+    """
+    Get last 5 working days (Mon-Fri) as YYYY-MM-DD strings in chronological order.
+    
+    Returns:
+        List[str]: List of 5 date strings in format YYYY-MM-DD, ordered from oldest to newest
+    """
+    dates = []
+    current = datetime.now()
+    
+    while len(dates) < 5:
+        if current.weekday() < 5:
+            dates.append(current.strftime("%Y-%m-%d"))
+        current -= timedelta(days=1)
+    
+    return sorted(dates)
+
+
+def fetch_last_5_working_days_prices(ticker: str = 'AAPL', api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Fetch last 5 working days of prices from Massive.com API.
+    
+    Uses the /v1/open-close/{ticker}/{date} endpoint with 12-second delays
+    between calls to respect the free tier rate limit (5 calls/minute).
+    
+    Args:
+        ticker: Stock ticker symbol (default: 'AAPL')
+        api_key: Massive.com API key (optional, defaults to env variable POLYGON_API_KEY)
+        
+    Returns:
+        dict: Dictionary with keys:
+            - timestamp: When the fetch was performed
+            - prices: List of price dicts with keys: date, open, high, low, close, volume
+            - last_fetch_timestamp: ISO format timestamp of fetch
+            
+    Raises:
+        PolygonAPIError: If API key not set or all API calls fail
+    """
+    if not api_key:
+        api_key = get_polygon_api_key()
+    
+    prices = []
+    working_days = get_last_5_working_days()
+    
+    try:
+        for i, date_str in enumerate(working_days):
+            try:
+                log.info(f"[{i+1}/5] Fetching {ticker} for {date_str}...")
+                
+                url = f"https://api.massive.com/v1/open-close/{ticker}/{date_str}"
+                params = {
+                    "adjusted": "true",
+                    "apiKey": api_key
+                }
+                
+                with httpx.Client() as client:
+                    response = client.get(url, params=params, timeout=30.0)
+                    response.raise_for_status()
+                    data = response.json()
+                
+                if data.get("status") != "OK":
+                    log.warning(f"No data for {date_str}: {data.get('status')}")
+                    continue
+                
+                prices.append({
+                    "date": date_str,
+                    "open": data.get("open"),
+                    "high": data.get("high"),
+                    "low": data.get("low"),
+                    "close": data.get("close"),
+                    "volume": data.get("volume")
+                })
+                
+                log.info(f"✓ Got data: close={data.get('close')}, volume={data.get('volume')}")
+                
+            except Exception as e:
+                log.error(f"Error fetching {date_str}: {e}")
+                error_logger.error(f"Error fetching {ticker} for {date_str}: {e}")
+                continue
+            
+            if i < len(working_days) - 1:
+                log.info("Rate limiting: waiting 12 seconds...")
+                time.sleep(12)
+        
+        if not prices:
+            error_msg = "No prices fetched for any working day"
+            log.error(error_msg)
+            error_logger.error(error_msg)
+            raise PolygonAPIError(error_msg)
+        
+        now = datetime.now(timezone.utc).isoformat()
+        state = {
+            'timestamp': now,
+            'prices': prices,
+            'last_fetch_timestamp': now
+        }
+        
+        save_prices_state(state)
+        
+        log.info(f"Successfully fetched {len(prices)} price records for {ticker}")
+        return state
+        
+    except PolygonAPIError:
+        raise
+    except Exception as e:
+        error_msg = f"Unexpected error fetching last 5 working days prices: {e}"
+        log.error(error_msg)
+        error_logger.error(error_msg)
+        raise PolygonAPIError(error_msg)
 
 
 def get_polygon_api_key() -> str:
@@ -98,7 +210,7 @@ def get_empty_state() -> Dict[str, Any]:
         dict: Empty state with default structure
     """
     return {
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'prices': [],
         'last_fetch_timestamp': None
     }
@@ -147,7 +259,7 @@ def fetch_aapl_prices(ticker: str = 'AAPL', days: int = 7, api_key: Optional[str
     
     try:
         # Calculate date range
-        end_date = datetime.utcnow().date()
+        end_date = datetime.now(timezone.utc).date()
         start_date = end_date - timedelta(days=days - 1)
         
         # Construct API URL for aggregates endpoint (handles multiple days)
@@ -189,7 +301,7 @@ def fetch_aapl_prices(ticker: str = 'AAPL', days: int = 7, api_key: Optional[str
             })
         
         # Create state
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         state = {
             'timestamp': now,
             'prices': prices,

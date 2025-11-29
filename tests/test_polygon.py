@@ -413,5 +413,162 @@ class TestPriceDropAlertDetector:
         assert 'price_drop_' in alert['reason']
 
 
+class TestFetchLast5WorkingDays:
+    """Test the fetch last 5 working days functionality."""
+
+    def test_get_last_5_working_days_returns_5_dates(self):
+        """Test that get_last_5_working_days returns exactly 5 dates."""
+        from edgar.polygon import get_last_5_working_days
+
+        days = get_last_5_working_days()
+
+        assert len(days) == 5
+        assert all(isinstance(day, str) for day in days)
+        assert all(len(day) == 10 for day in days)  # YYYY-MM-DD format
+
+    def test_get_last_5_working_days_returns_weekdays_only(self):
+        """Test that all returned dates are weekdays (Mon-Fri)."""
+        from datetime import datetime
+        from edgar.polygon import get_last_5_working_days
+
+        days = get_last_5_working_days()
+
+        for day in days:
+            d = datetime.strptime(day, '%Y-%m-%d')
+            assert d.weekday() < 5  # 0-4 = Mon-Fri
+
+    def test_get_last_5_working_days_returns_chronological_order(self):
+        """Test that dates are returned in chronological order."""
+        from datetime import datetime
+        from edgar.polygon import get_last_5_working_days
+
+        days = get_last_5_working_days()
+        dates = [datetime.strptime(day, '%Y-%m-%d') for day in days]
+
+        for i in range(len(dates) - 1):
+            assert dates[i] < dates[i + 1]
+
+    @patch('edgar.polygon.httpx.Client')
+    @patch('edgar.polygon.time.sleep')
+    def test_fetch_last_5_working_days_prices_success(self, mock_sleep, mock_client_class):
+        """Test successful fetch of last 5 working days prices."""
+        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+
+        working_days = get_last_5_working_days()
+
+        # Mock responses
+        mock_client = MagicMock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        responses = []
+        for i, date_str in enumerate(working_days):
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "status": "OK",
+                "date": date_str,
+                "open": 230.0 + i,
+                "high": 235.0 + i,
+                "low": 228.0 + i,
+                "close": 232.0 + i,
+                "volume": 1000000 + i * 100000,
+            }
+            responses.append(mock_response)
+
+        mock_client.get.side_effect = responses
+
+        with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
+            state = fetch_last_5_working_days_prices()
+
+        # Verify state structure
+        assert 'timestamp' in state
+        assert 'prices' in state
+        assert 'last_fetch_timestamp' in state
+
+        # Verify prices
+        prices = state['prices']
+        assert len(prices) == 5
+
+        for i, price in enumerate(prices):
+            assert 'date' in price
+            assert 'open' in price
+            assert 'high' in price
+            assert 'low' in price
+            assert 'close' in price
+            assert 'volume' in price
+            assert price['date'] == working_days[i]
+
+    @patch('edgar.polygon.httpx.Client')
+    @patch('edgar.polygon.time.sleep')
+    def test_fetch_last_5_working_days_prices_rate_limiting(self, mock_sleep, mock_client_class):
+        """Test that rate limiting (12-second delays) is applied."""
+        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+
+        working_days = get_last_5_working_days()
+
+        # Mock responses
+        mock_client = MagicMock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        responses = []
+        for i, date_str in enumerate(working_days):
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "status": "OK",
+                "date": date_str,
+                "close": 232.0 + i,
+                "volume": 1000000 + i * 100000,
+            }
+            responses.append(mock_response)
+
+        mock_client.get.side_effect = responses
+
+        with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
+            fetch_last_5_working_days_prices()
+
+        # Verify rate limiting: 4 sleeps for 5 calls
+        assert mock_sleep.call_count == 4
+        for call in mock_sleep.call_args_list:
+            assert call[0][0] == 12
+
+    @patch('edgar.polygon.httpx.Client')
+    def test_fetch_last_5_working_days_prices_includes_ohlcv(self, mock_client_class):
+        """Test that prices include open, high, low, close, volume."""
+        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+
+        working_days = get_last_5_working_days()
+
+        # Mock responses with full OHLCV
+        mock_client = MagicMock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        responses = []
+        for i, date_str in enumerate(working_days):
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "status": "OK",
+                "date": date_str,
+                "open": 230.0,
+                "high": 235.0,
+                "low": 228.0,
+                "close": 232.0,
+                "volume": 1000000,
+            }
+            responses.append(mock_response)
+
+        mock_client.get.side_effect = responses
+
+        with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
+            with patch('edgar.polygon.time.sleep'):
+                state = fetch_last_5_working_days_prices()
+
+        # Verify all OHLCV fields are present
+        for price in state['prices']:
+            assert price['open'] == 230.0
+            assert price['high'] == 235.0
+            assert price['low'] == 228.0
+            assert price['close'] == 232.0
+            assert price['volume'] == 1000000
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
