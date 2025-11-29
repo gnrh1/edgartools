@@ -1,4 +1,4 @@
-name: Weekly AAPL Price Update
+name: Weekly Multi-Stock Price Update
 
 on:
   # Run every Monday at 8 AM UTC
@@ -34,7 +34,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
       
-      - name: Run pipeline
+      - name: Run multi-stock pipeline
         env:
           POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
         run: |

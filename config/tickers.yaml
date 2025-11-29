@@ -1,0 +1,4 @@
+monitored_stocks:
+  - AAPL
+  - MSFT
+  - GOOGL
