@@ -46,7 +46,7 @@ def get_last_5_working_days() -> List[str]:
         List[str]: List of 5 date strings in format YYYY-MM-DD, ordered from oldest to newest
     """
     dates = []
-    current = datetime.now()
+    current = datetime.now(timezone.utc)
     
     while len(dates) < 5:
         if current.weekday() < 5:
@@ -56,12 +56,30 @@ def get_last_5_working_days() -> List[str]:
     return sorted(dates)
 
 
+def fetch_with_retry(client: httpx.Client, url: str, params: Dict[str, Any], max_retries: int = 2, timeout: float = 30.0) -> Dict[str, Any]:
+    """Fetch data with retry logic for transient failures."""
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.get(url, params=params, timeout=timeout)
+            response.raise_for_status()
+            return response.json()
+        except Exception as exc:
+            attempt_number = attempt + 1
+            if attempt < max_retries:
+                log.warning(f"Attempt {attempt_number} failed for {url}: {exc}. Retrying in 5 seconds...")
+                time.sleep(5)
+            else:
+                log.error(f"Attempt {attempt_number} failed for {url}: {exc}. No retries left.")
+                raise
+
+
 def fetch_last_5_working_days_prices(ticker: str = 'AAPL', api_key: Optional[str] = None) -> Dict[str, Any]:
     """
     Fetch last 5 working days of prices from Massive.com API.
     
-    Uses the /v1/open-close/{ticker}/{date} endpoint with 12-second delays
-    between calls to respect the free tier rate limit (5 calls/minute).
+    Uses the /v1/open-close/{ticker}/{date} endpoint with 15-second delays
+    between calls to respect the free tier rate limit (5 calls/minute) and
+    includes retry logic for transient failures or market holidays.
     
     Args:
         ticker: Stock ticker symbol (default: 'AAPL')
@@ -83,44 +101,42 @@ def fetch_last_5_working_days_prices(ticker: str = 'AAPL', api_key: Optional[str
     working_days = get_last_5_working_days()
     
     try:
-        for i, date_str in enumerate(working_days):
-            try:
-                log.info(f"[{i+1}/5] Fetching {ticker} for {date_str}...")
-                
-                url = f"https://api.massive.com/v1/open-close/{ticker}/{date_str}"
-                params = {
-                    "adjusted": "true",
-                    "apiKey": api_key
-                }
-                
-                with httpx.Client() as client:
-                    response = client.get(url, params=params, timeout=30.0)
-                    response.raise_for_status()
-                    data = response.json()
-                
-                if data.get("status") != "OK":
-                    log.warning(f"No data for {date_str}: {data.get('status')}")
+        with httpx.Client() as client:
+            for i, date_str in enumerate(working_days):
+                try:
+                    log.info(f"[{i+1}/5] Fetching {ticker} for {date_str}...")
+                    
+                    url = f"https://api.massive.com/v1/open-close/{ticker}/{date_str}"
+                    params = {
+                        "adjusted": "true",
+                        "apiKey": api_key
+                    }
+                    
+                    data = fetch_with_retry(client, url, params, max_retries=2)
+                    status = data.get("status")
+                    if status != "OK":
+                        log.warning(f"No data for {date_str}: {status or 'UNKNOWN'} (likely holiday or market closed)")
+                        continue
+                    
+                    prices.append({
+                        "date": date_str,
+                        "open": data.get("open"),
+                        "high": data.get("high"),
+                        "low": data.get("low"),
+                        "close": data.get("close"),
+                        "volume": data.get("volume")
+                    })
+                    
+                    log.info(f"✓ Got data: close={data.get('close')}, volume={data.get('volume')}")
+                    
+                except Exception as e:
+                    log.error(f"Failed to fetch {date_str} after retries: {e}")
+                    error_logger.error(f"Failed to fetch {ticker} for {date_str}: {e}")
                     continue
                 
-                prices.append({
-                    "date": date_str,
-                    "open": data.get("open"),
-                    "high": data.get("high"),
-                    "low": data.get("low"),
-                    "close": data.get("close"),
-                    "volume": data.get("volume")
-                })
-                
-                log.info(f"✓ Got data: close={data.get('close')}, volume={data.get('volume')}")
-                
-            except Exception as e:
-                log.error(f"Error fetching {date_str}: {e}")
-                error_logger.error(f"Error fetching {ticker} for {date_str}: {e}")
-                continue
-            
-            if i < len(working_days) - 1:
-                log.info("Rate limiting: waiting 12 seconds...")
-                time.sleep(12)
+                if i < len(working_days) - 1:
+                    log.info("Rate limiting: waiting 15 seconds...")
+                    time.sleep(15)
         
         if not prices:
             error_msg = "No prices fetched for any working day"

@@ -500,7 +500,7 @@ class TestFetchLast5WorkingDays:
     @patch('edgar.polygon.httpx.Client')
     @patch('edgar.polygon.time.sleep')
     def test_fetch_last_5_working_days_prices_rate_limiting(self, mock_sleep, mock_client_class):
-        """Test that rate limiting (12-second delays) is applied."""
+        """Test that rate limiting (15-second delays) is applied."""
         from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
@@ -528,7 +528,86 @@ class TestFetchLast5WorkingDays:
         # Verify rate limiting: 4 sleeps for 5 calls
         assert mock_sleep.call_count == 4
         for call in mock_sleep.call_args_list:
-            assert call[0][0] == 12
+            assert call[0][0] == 15
+
+    @patch('edgar.polygon.httpx.Client')
+    @patch('edgar.polygon.time.sleep')
+    def test_fetch_last_5_working_days_prices_skips_non_ok_status(self, mock_sleep, mock_client_class):
+        """Test that non-OK status responses (holidays) are skipped gracefully."""
+        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+
+        working_days = get_last_5_working_days()
+
+        mock_client = MagicMock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        skipped_date = working_days[2]
+        responses = []
+        for date_str in working_days:
+            mock_response = MagicMock()
+            if date_str == skipped_date:
+                mock_response.json.return_value = {
+                    "status": "MARKET_CLOSED",
+                }
+            else:
+                mock_response.json.return_value = {
+                    "status": "OK",
+                    "date": date_str,
+                    "open": 230.0,
+                    "high": 235.0,
+                    "low": 228.0,
+                    "close": 232.0,
+                    "volume": 1000000,
+                }
+            responses.append(mock_response)
+
+        mock_client.get.side_effect = responses
+
+        with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
+            state = fetch_last_5_working_days_prices()
+
+        prices = state['prices']
+        assert len(prices) == 4
+        dates = [price['date'] for price in prices]
+        assert skipped_date not in dates
+        assert mock_sleep.call_count == 4
+
+    @patch('edgar.polygon.httpx.Client')
+    @patch('edgar.polygon.time.sleep')
+    def test_fetch_last_5_working_days_prices_retries_on_transient_failure(self, mock_sleep, mock_client_class):
+        """Test that transient failures are retried before succeeding."""
+        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+
+        working_days = get_last_5_working_days()
+
+        mock_client = MagicMock()
+        mock_client_class.return_value.__enter__.return_value = mock_client
+
+        responses = []
+        for i, date_str in enumerate(working_days):
+            mock_response = MagicMock()
+            mock_response.json.return_value = {
+                "status": "OK",
+                "date": date_str,
+                "open": 230.0 + i,
+                "high": 235.0 + i,
+                "low": 228.0 + i,
+                "close": 232.0 + i,
+                "volume": 1000000 + i * 100000,
+            }
+            responses.append(mock_response)
+
+        mock_client.get.side_effect = [Exception("temporary error")] + responses
+
+        with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
+            state = fetch_last_5_working_days_prices()
+
+        assert len(state['prices']) == 5
+        assert mock_client.get.call_count == len(working_days) + 1
+
+        durations = [call[0][0] for call in mock_sleep.call_args_list]
+        assert durations.count(5) == 1  # Retry delay
+        assert durations.count(15) == 4  # Rate limiting delays
 
     @patch('edgar.polygon.httpx.Client')
     def test_fetch_last_5_working_days_prices_includes_ohlcv(self, mock_client_class):
