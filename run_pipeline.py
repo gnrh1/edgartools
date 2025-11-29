@@ -46,16 +46,16 @@ def validate_environment() -> bool:
 
 
 def fetch_prices() -> bool:
-    """Execute Task 1: Fetch AAPL prices for last 7 days."""
+    """Execute Task 1: Fetch AAPL prices for last 5 working days."""
     log("=" * 60)
-    log("TASK 1: Fetching AAPL prices for last 7 days...")
+    log("TASK 1: Fetching AAPL prices for last 5 working days...")
     log("=" * 60)
     
     try:
-        from edgar.polygon import fetch_aapl_last_7_days
+        from edgar.polygon import fetch_last_5_working_days_prices
         
         # Fetch prices and save to prices_state.json
-        state = fetch_aapl_last_7_days()
+        state = fetch_last_5_working_days_prices()
         
         log(f"Successfully fetched {len(state.get('prices', []))} price records")
         log(f"Date range: {state.get('prices', [{}])[0].get('date')} to {state.get('prices', [{}])[-1].get('date')}")
