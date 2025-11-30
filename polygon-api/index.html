@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Polygon API Integration - edgartools</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Polygon API Integration";
+        var mkdocs_page_input_path = "polygon-api.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> edgartools
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../filtering-filings/">Filtering</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../working-with-filings/">Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company/">Companies</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../attachments/">Attachments</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company-financials/">Financials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../insider-filings/">Insider Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../xbrl/">XBRL</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../sgml/">SGML</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../data-objects/">Data Objects</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../local-data/">Local Storage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../quick-guide/">Quick Guide</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">User Journeys</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">edgartools</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Polygon API Integration</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="polygon-api-integration">Polygon API Integration</h1>
+<p>The Polygon API integration provides functionality to fetch stock market data from Polygon.io, including AAPL stock prices for the last 7 days (or any custom period).</p>
+<h2 id="setup">Setup</h2>
+<p>To use the Polygon API integration, you need to:</p>
+<ol>
+<li>Set the <code>POLYGON_API_KEY</code> environment variable with your Polygon API key:</li>
+</ol>
+<pre><code class="language-bash">export POLYGON_API_KEY=&quot;your_api_key_here&quot;
+</code></pre>
+<h2 id="usage">Usage</h2>
+<h3 id="fetch-aapl-prices-last-7-days">Fetch AAPL Prices (Last 7 Days)</h3>
+<pre><code class="language-python">from edgar import fetch_aapl_last_7_days
+
+# Fetch AAPL prices for the last 7 days
+state = fetch_aapl_last_7_days()
+
+print(state['prices'])  # List of price data
+print(state['timestamp'])  # When the data was fetched
+</code></pre>
+<h3 id="fetch-any-stock-prices">Fetch Any Stock Prices</h3>
+<pre><code class="language-python">from edgar import fetch_aapl_prices
+
+# Fetch MSFT prices for the last 30 days
+state = fetch_aapl_prices(ticker='MSFT', days=30)
+</code></pre>
+<h3 id="get-current-prices-state">Get Current Prices State</h3>
+<pre><code class="language-python">from edgar import get_prices_state
+
+# Load the current prices state from file
+state = get_prices_state()
+
+# Access the data
+for price_data in state['prices']:
+    print(f&quot;{price_data['date']}: Close=${price_data['close']}, Volume={price_data['volume']}&quot;)
+</code></pre>
+<h2 id="state-file">State File</h2>
+<p>The fetched prices are automatically saved to <code>data/prices_state.json</code> with the following structure:</p>
+<pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2024-01-01T12:00:00.000000&quot;,
+  &quot;prices&quot;: [
+    {
+      &quot;date&quot;: &quot;2024-01-01&quot;,
+      &quot;close&quot;: 150.25,
+      &quot;volume&quot;: 52000000
+    },
+    {
+      &quot;date&quot;: &quot;2024-01-02&quot;,
+      &quot;close&quot;: 151.50,
+      &quot;volume&quot;: 48000000
+    }
+  ],
+  &quot;last_fetch_timestamp&quot;: &quot;2024-01-02T12:00:00.000000&quot;
+}
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>All API errors are logged to <code>~/fetch_errors.log</code> with timestamps. If the API is unavailable or the API key is missing, a <code>PolygonAPIError</code> exception is raised.</p>
+<pre><code class="language-python">from edgar import fetch_aapl_prices, PolygonAPIError
+
+try:
+    state = fetch_aapl_prices()
+except PolygonAPIError as e:
+    print(f&quot;Error: {e}&quot;)
+</code></pre>
+<h2 id="api-functions">API Functions</h2>
+<h3 id="fetch_aapl_last_7_daysapi_keynone">fetch_aapl_last_7_days(api_key=None)</h3>
+<p>Convenience function to fetch AAPL stock prices for the last 7 days.</p>
+<p><strong>Parameters:</strong>
+- <code>api_key</code> (str, optional): Polygon API key. If not provided, uses POLYGON_API_KEY environment variable.</p>
+<p><strong>Returns:</strong>
+- dict: State dictionary with timestamp, prices list, and last_fetch_timestamp</p>
+<p><strong>Raises:</strong>
+- <code>PolygonAPIError</code>: If API call fails</p>
+<h3 id="fetch_aapl_pricestickeraapl-days7-api_keynone">fetch_aapl_prices(ticker='AAPL', days=7, api_key=None)</h3>
+<p>Fetch stock prices for the specified ticker and date range.</p>
+<p><strong>Parameters:</strong>
+- <code>ticker</code> (str): Stock ticker symbol (default: 'AAPL')
+- <code>days</code> (int): Number of days to fetch (default: 7)
+- <code>api_key</code> (str, optional): Polygon API key. If not provided, uses POLYGON_API_KEY environment variable.</p>
+<p><strong>Returns:</strong>
+- dict: State dictionary with timestamp, prices list, and last_fetch_timestamp</p>
+<p><strong>Raises:</strong>
+- <code>PolygonAPIError</code>: If API call fails</p>
+<h3 id="get_prices_state">get_prices_state()</h3>
+<p>Load the prices state from the state file.</p>
+<p><strong>Returns:</strong>
+- dict: State dictionary with timestamp, prices list, and last_fetch_timestamp</p>
+<h3 id="save_prices_statestate">save_prices_state(state)</h3>
+<p>Save the prices state to the state file.</p>
+<p><strong>Parameters:</strong>
+- <code>state</code> (dict): Dictionary containing timestamp, prices, and last_fetch_timestamp</p>
+<p><strong>Raises:</strong>
+- <code>PolygonAPIError</code>: If file write fails</p>
+<h2 id="testing">Testing</h2>
+<p>Run the test suite for the Polygon API integration:</p>
+<pre><code class="language-bash">pytest tests/test_polygon.py -v
+</code></pre>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Divergence Log - edgartools</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Divergence Log";
+        var mkdocs_page_input_path = "DIVERGENCE_LOG.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> edgartools
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../filtering-filings/">Filtering</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../working-with-filings/">Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company/">Companies</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../attachments/">Attachments</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company-financials/">Financials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../insider-filings/">Insider Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../xbrl/">XBRL</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../sgml/">SGML</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../data-objects/">Data Objects</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../local-data/">Local Storage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../quick-guide/">Quick Guide</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">User Journeys</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">edgartools</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Divergence Log</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="divergence-log">Divergence Log</h1>
+<p>This file tracks all modifications made to the core <code>edgar/</code> library code that deviate from the original <code>edgartools</code> v4.0.0 base.</p>
+<h2 id="2025-11-30-sec-filing-enrichment-fixes">2025-11-30: SEC Filing Enrichment Fixes</h2>
+<h3 id="1-fix-date-type-checking-in-fetch_recent_filings">1. Fix Date Type Checking in <code>fetch_recent_filings</code></h3>
+<ul>
+<li><strong>File</strong>: <code>edgar/sec_filings.py</code></li>
+<li><strong>Change</strong>: Updated <code>fetch_recent_filings</code> to handle <code>datetime.date</code> objects returned by the underlying library.</li>
+<li><strong>Reason</strong>: The original code strictly checked for <code>datetime.datetime</code>, causing valid filings to be skipped.</li>
+<li><strong>Status</strong>: Custom fix (Upstream status unknown).</li>
+</ul>
+<h3 id="2-increase-lookback-period-for-alerts">2. Increase Lookback Period for Alerts</h3>
+<ul>
+<li><strong>File</strong>: <code>edgar/filing_context_appender.py</code></li>
+<li><strong>Change</strong>: Increased default <code>days_back</code> from 2 to 90 in <code>enrich_all_alerts_with_filings</code> and <code>safe_enrich_all_alerts</code>.</li>
+<li><strong>Reason</strong>: A 2-day lookback is insufficient for a weekly pipeline; 90 days ensures quarterly (10-Q) and annual (10-K) filings are captured.</li>
+<li><strong>Status</strong>: Custom configuration change.</li>
+</ul>
+<h3 id="3-architectural-refactoring-2025-11-30">3. Architectural Refactoring (2025-11-30)</h3>
+<ul>
+<li><strong>Change</strong>: Moved custom application logic out of <code>edgar/</code> and into <code>pipeline/</code>.</li>
+<li><strong>Files Moved</strong>:<ul>
+<li><code>edgar/filing_context_appender.py</code> -&gt; <code>pipeline/enrichment.py</code></li>
+<li><code>edgar/filing_scorer.py</code> -&gt; <code>pipeline/scoring.py</code></li>
+<li><code>edgar/filing_summarizer.py</code> -&gt; <code>pipeline/summarizer.py</code></li>
+<li><code>edgar/polygon.py</code> -&gt; <code>pipeline/polygon.py</code></li>
+<li><code>edgar/financial_analyzer.py</code> -&gt; <code>pipeline/financial_analyzer.py</code></li>
+<li><code>edgar/sec_filings.py</code> -&gt; <code>pipeline/sec_filings.py</code></li>
+</ul>
+</li>
+<li><strong>Impact</strong>: <code>edgar/</code> directory now contains only core library code (plus the <code>sec_filings.py</code> fix which is now in <code>pipeline/</code> but was originally a library file).<ul>
+<li><em>Note</em>: <code>sec_filings.py</code> was moved to <code>pipeline/</code> to keep all custom/modified code together, even though it started as a library file. This means <code>edgar/</code> is now effectively pristine upstream code (minus the missing <code>sec_filings.py</code>).</li>
+</ul>
+</li>
+</ul>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

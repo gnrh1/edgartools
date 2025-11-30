@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Brainstorming: Innovative Financial Analysis Adjudication - edgartools</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Brainstorming: Innovative Financial Analysis Adjudication";
+        var mkdocs_page_input_path = "BRAINSTORM_FINANCIAL_ANALYSIS.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> edgartools
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../filtering-filings/">Filtering</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../working-with-filings/">Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company/">Companies</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../attachments/">Attachments</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company-financials/">Financials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../insider-filings/">Insider Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../xbrl/">XBRL</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../sgml/">SGML</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../data-objects/">Data Objects</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../local-data/">Local Storage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../quick-guide/">Quick Guide</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">User Journeys</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">edgartools</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Brainstorming: Innovative Financial Analysis Adjudication</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="brainstorming-innovative-financial-analysis-adjudication">Brainstorming: Innovative Financial Analysis Adjudication</h1>
+<p><strong>Objective:</strong> Replace hardcoded keywords/heuristics in "Related SEC Findings" with dynamic, financially sensitive signals.</p>
+<h2 id="framework-think-pause-rethink">Framework: Think-Pause-Rethink</h2>
+<h3 id="1-mental-model-inversion-the-diff-engine">1. Mental Model: Inversion (The "Diff" Engine)</h3>
+<p><strong>Think:</strong> "What are the key words in this filing?"
+<strong>Rethink:</strong> "What <em>changed</em> in this filing compared to the last one?"
+<strong>Concept:</strong> Instead of scoring the static text, score the <strong>delta</strong>.
+-   <strong>Implementation:</strong>
+    -   <strong>Risk Factor Drift:</strong> Calculate Cosine Similarity between the "Risk Factors" (Item 1A) of the current 10-K/Q and the previous one.
+    -   <strong>Signal:</strong> Low similarity = High Relevance. It means the company is rewriting its risks (e.g., adding "AI regulation" or "Supply chain disruption").
+    -   <strong>Adjudication:</strong> "Relevance Score" boosts if <code>similarity &lt; 0.9</code>.</p>
+<h3 id="2-mental-model-the-map-is-not-the-territory-market-derived-relevance">2. Mental Model: The Map is Not the Territory (Market-Derived Relevance)</h3>
+<p><strong>Think:</strong> "Is this 8-K important based on its form type?"
+<strong>Rethink:</strong> "Did the market <em>care</em> about this 8-K?"
+<strong>Concept:</strong> Use <strong>Price Velocity</strong> as the ground truth for relevance, not the text.
+-   <strong>Implementation:</strong>
+    -   <strong>Volatility Intersection:</strong> Calculate the standard deviation of price returns in the 30 minutes <em>after</em> the filing timestamp.
+    -   <strong>Signal:</strong> If <code>Post-Filing Volatility &gt; 3x Average Volatility</code>, the filing is <strong>Critical</strong>, regardless of what it says.
+    -   <strong>Adjudication:</strong> Override any text-based score if market reaction is violent. Label: "Market Mover".</p>
+<h3 id="3-mental-model-signal-vs-noise-linguistic-entropy">3. Mental Model: Signal vs. Noise (Linguistic Entropy)</h3>
+<p><strong>Think:</strong> "Does it contain the word 'lawsuit'?"
+<strong>Rethink:</strong> "Is the language unusually complex or evasive?"
+<strong>Concept:</strong> <strong>Obfuscation Detection</strong>.
+-   <strong>Implementation:</strong>
+    -   <strong>Gunning-Fog Index:</strong> Measure the readability complexity.
+    -   <strong>Hedge Word Density:</strong> Count frequency of "may", "could", "might", "approximately".
+    -   <strong>Signal:</strong> A sudden spike in complexity or hedge words often hides bad news (e.g., trying to bury a missed earnings target in complex prose).
+    -   <strong>Adjudication:</strong> "High Complexity Alert" – likely hiding negative nuance.</p>
+<h3 id="4-mental-model-second-order-thinking-the-peer-effect">4. Mental Model: Second-Order Thinking (The "Peer" Effect)</h3>
+<p><strong>Think:</strong> "How does this affect AAPL?"
+<strong>Rethink:</strong> "How does this compare to MSFT's filing yesterday?"
+<strong>Concept:</strong> <strong>Sector Benchmarking</strong>.
+-   <strong>Implementation:</strong>
+    -   <strong>Thematic Divergence:</strong> If MSFT, GOOGL, and AMZN all mention "AI CapEx" in their 10-Qs, but AAPL <em>doesn't</em>, that omission is the signal.
+    -   <strong>Signal:</strong> Divergence from the sector trend.
+    -   <strong>Adjudication:</strong> "Sector Outlier".</p>
+<h2 id="proposed-architecture-the-adjudicator-pipeline">Proposed Architecture: The "Adjudicator" Pipeline</h2>
+<p>We can replace the simple <code>scoring.py</code> with a multi-agent "Adjudicator":</p>
+<ol>
+<li><strong>The Quant Agent:</strong> Calculates Price Velocity &amp; Volatility around the filing timestamp.</li>
+<li><strong>The Linguist Agent:</strong> Calculates Diff Similarity &amp; Fog Index.</li>
+<li><strong>The Historian Agent:</strong> Checks if this event (e.g., "CFO Resignation") historically caused a drop for <em>this specific stock</em>.</li>
+</ol>
+<h3 id="example-output-in-dashboard">Example Output in Dashboard</h3>
+<p>Instead of:</p>
+<blockquote>
+<p><em>8-K: No details 🟡 Possibly related</em></p>
+</blockquote>
+<p>We generate:</p>
+<blockquote>
+<p><em>8-K: </em><em>Critical</em><em> 🔴 (Score: 0.95)</em>
+* <strong>Market Reaction:</strong> Price dropped 2.4% within 15 mins of filing.<em>
+* </em><em>Risk Drift:</em><em> 40% change in "Risk Factors" vs. last quarter.</em>
+* <strong>Context:</strong> "Departure of Directors" (Historical impact: -1.2%)*</p>
+</blockquote>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

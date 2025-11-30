@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Financial Analyzer Module - edgartools</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Financial Analyzer Module";
+        var mkdocs_page_input_path = "FINANCIAL_ANALYZER.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> edgartools
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../filtering-filings/">Filtering</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../working-with-filings/">Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company/">Companies</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../attachments/">Attachments</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../company-financials/">Financials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../insider-filings/">Insider Filings</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../xbrl/">XBRL</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../sgml/">SGML</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../data-objects/">Data Objects</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../local-data/">Local Storage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../quick-guide/">Quick Guide</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../examples/">User Journeys</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">edgartools</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Financial Analyzer Module</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="financial-analyzer-module">Financial Analyzer Module</h1>
+<h2 id="overview">Overview</h2>
+<p>The <code>pipeline.financial_analyzer</code> module extracts historical ROIC (Return on Invested Capital), calculates WACC (Weighted Average Cost of Capital), and computes the spread (ROIC - WACC) for portfolio analysis. It uses XBRL data from SEC 10-K filings with intelligent fallback mechanisms.</p>
+<p>This module is part of <strong>Phase 4 Pillar 1: Financial Data Foundation</strong> and provides the core financial metrics needed for valuation and quality assessment.</p>
+<h2 id="key-concepts">Key Concepts</h2>
+<h3 id="roic-return-on-invested-capital">ROIC (Return on Invested Capital)</h3>
+<p>ROIC measures how efficiently a company generates returns from its invested capital:</p>
+<pre><code>ROIC = NOPAT / Invested Capital
+
+Where:
+- NOPAT = Operating Income × (1 - Tax Rate)
+- Invested Capital = Total Assets - Cash - Non-Interest Liabilities
+</code></pre>
+<p>A high ROIC (&gt;15%) indicates strong competitive advantages and efficient capital allocation.</p>
+<h3 id="wacc-weighted-average-cost-of-capital">WACC (Weighted Average Cost of Capital)</h3>
+<p>WACC represents the minimum return a company must earn to satisfy all stakeholders:</p>
+<pre><code>WACC = (E/V × Re) + (D/V × Rd × (1-Tc))
+
+Where:
+- E/V = Equity ratio
+- Re = Cost of equity (calculated using CAPM)
+- D/V = Debt ratio
+- Rd = Cost of debt
+- Tc = Corporate tax rate
+</code></pre>
+<h3 id="cost-of-equity-capm">Cost of Equity (CAPM)</h3>
+<pre><code>Re = Rf + β(Rm - Rf)
+
+Where:
+- Rf = Risk-free rate (10-year Treasury, default 4.0%)
+- β = Beta (market risk, default 1.0)
+- Rm - Rf = Market risk premium (default 5.5%)
+</code></pre>
+<h3 id="spread">Spread</h3>
+<p>The spread measures value creation:</p>
+<pre><code>Spread = ROIC - WACC
+</code></pre>
+<ul>
+<li><strong>Spread &gt; 5%</strong>: Company creates significant value</li>
+<li><strong>Spread &gt; 0%</strong>: Company creates value</li>
+<li><strong>Spread &lt; 0%</strong>: Company destroys value</li>
+</ul>
+<h2 id="functions">Functions</h2>
+<h3 id="extract_roic_historyticker-years5">extract_roic_history(ticker, years=5)</h3>
+<p>Extract historical ROIC data from 10-K filings.</p>
+<p><strong>Parameters:</strong>
+- <code>ticker</code> (str): Stock ticker symbol
+- <code>years</code> (int, optional): Number of years of history (default: 5)</p>
+<p><strong>Returns:</strong>
+- <code>ROICData</code>: Object containing:
+  - <code>years</code>: List of years
+  - <code>roic_values</code>: List of ROIC percentages
+  - <code>nopat_values</code>: List of NOPAT values
+  - <code>invested_capital_values</code>: List of invested capital values</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from pipeline.financial_analyzer import extract_roic_history
+
+roic_data = extract_roic_history('AAPL', years=5)
+
+for year, roic in zip(roic_data.years, roic_data.roic_values):
+    print(f&quot;{year}: ROIC = {roic:.2%}&quot;)
+</code></pre>
+<p><strong>Raises:</strong>
+- <code>InsufficientDataError</code>: If fewer than 3 years of data available
+- <code>FinancialDataError</code>: If extraction fails</p>
+<h3 id="extract_wacc_componentsticker-risk_free_ratenone-market_risk_premiumnone-betanone">extract_wacc_components(ticker, risk_free_rate=None, market_risk_premium=None, beta=None)</h3>
+<p>Extract components needed for WACC calculation.</p>
+<p><strong>Parameters:</strong>
+- <code>ticker</code> (str): Stock ticker symbol
+- <code>risk_free_rate</code> (float, optional): Override default risk-free rate (default: 0.04)
+- <code>market_risk_premium</code> (float, optional): Override default market risk premium (default: 0.055)
+- <code>beta</code> (float, optional): Override default beta (default: 1.0)</p>
+<p><strong>Returns:</strong>
+- <code>WACCComponents</code>: Object containing all WACC components</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from pipeline.financial_analyzer import extract_wacc_components
+
+components = extract_wacc_components('AAPL', beta=1.2)
+
+print(f&quot;Cost of Equity: {components.cost_of_equity:.2%}&quot;)
+print(f&quot;Cost of Debt: {components.cost_of_debt:.2%}&quot;)
+print(f&quot;Equity Ratio: {components.equity_ratio:.2%}&quot;)
+</code></pre>
+<h3 id="calculate_waccticker-overridesnone-sensitivityfalse">calculate_wacc(ticker, overrides=None, sensitivity=False)</h3>
+<p>Calculate Weighted Average Cost of Capital.</p>
+<p><strong>Parameters:</strong>
+- <code>ticker</code> (str): Stock ticker symbol
+- <code>overrides</code> (dict, optional): Override parameters (risk_free_rate, market_risk_premium, beta)
+- <code>sensitivity</code> (bool): If True, calculate optimistic/pessimistic scenarios (±100bps to Rf)</p>
+<p><strong>Returns:</strong>
+- <code>WACCResult</code>: Object containing baseline WACC, scenarios, and component breakdown</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from pipeline.financial_analyzer import calculate_wacc
+
+# Basic WACC
+wacc_result = calculate_wacc('AAPL')
+print(f&quot;WACC: {wacc_result.baseline_wacc:.2%}&quot;)
+
+# With sensitivity analysis
+wacc_result = calculate_wacc('AAPL', sensitivity=True)
+print(f&quot;Base:        {wacc_result.scenarios['base']:.2%}&quot;)
+print(f&quot;Optimistic:  {wacc_result.scenarios['optimistic']:.2%}&quot;)
+print(f&quot;Pessimistic: {wacc_result.scenarios['pessimistic']:.2%}&quot;)
+
+# With custom parameters
+wacc_result = calculate_wacc(
+    'AAPL',
+    overrides={'risk_free_rate': 0.05, 'beta': 1.3}
+)
+</code></pre>
+<h3 id="calculate_spreadticker-years5">calculate_spread(ticker, years=5)</h3>
+<p>Calculate ROIC-WACC spread with trend analysis.</p>
+<p><strong>Parameters:</strong>
+- <code>ticker</code> (str): Stock ticker symbol
+- <code>years</code> (int, optional): Number of years of history (default: 5)</p>
+<p><strong>Returns:</strong>
+- <code>SpreadResult</code>: Object containing:
+  - <code>current_spread</code>: Most recent spread value
+  - <code>spread_history</code>: Historical spread values
+  - <code>years</code>: Years for historical data
+  - <code>spread_trend</code>: 'improving', 'deteriorating', or 'stable'
+  - <code>durability_assessment</code>: 'strong', 'uncertain', or 'weak'
+  - <code>roic_data</code>: Full ROIC data
+  - <code>wacc_result</code>: Full WACC calculation</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-python">from pipeline.financial_analyzer import calculate_spread
+
+spread = calculate_spread('AAPL', years=5)
+
+print(f&quot;Current Spread: {spread.current_spread:.2%}&quot;)
+print(f&quot;Trend: {spread.spread_trend}&quot;)
+print(f&quot;Durability: {spread.durability_assessment}&quot;)
+
+for year, spread_val in zip(spread.years, spread.spread_history):
+    print(f&quot;{year}: {spread_val:.2%}&quot;)
+</code></pre>
+<h2 id="trend-and-durability-assessment">Trend and Durability Assessment</h2>
+<h3 id="spread-trend-classification">Spread Trend Classification</h3>
+<p>The module analyzes the 3-year trend of spread:</p>
+<ul>
+<li><strong>Improving</strong>: Spread increased by &gt;2% over the period</li>
+<li><strong>Deteriorating</strong>: Spread decreased by &gt;2% over the period</li>
+<li><strong>Stable</strong>: Spread changed by ≤2% over the period</li>
+</ul>
+<h3 id="durability-assessment">Durability Assessment</h3>
+<p>Durability indicates the sustainability of value creation:</p>
+<ul>
+<li><strong>Strong</strong>: Spread &gt; 5% AND trend is improving</li>
+<li>
+<p>High-quality business with improving competitive position</p>
+</li>
+<li>
+<p><strong>Uncertain</strong>: Spread deteriorating OR spread &lt; 5%</p>
+</li>
+<li>
+<p>Moderate quality or weakening competitive position</p>
+</li>
+<li>
+<p><strong>Weak</strong>: Spread &lt; 0% OR (spread deteriorating AND &lt; 3%)</p>
+</li>
+<li>Low quality or destroying value</li>
+</ul>
+<h2 id="caching">Caching</h2>
+<p>The module automatically caches financial data in <code>/data/financial_cache_{ticker}.json</code> to:
+- Avoid redundant SEC API calls
+- Speed up repeated calculations
+- Reduce load on SEC servers</p>
+<p>Cache files are valid for 90 days and include:
+- ROIC history
+- WACC components
+- Full spread analysis</p>
+<h2 id="edge-case-handling">Edge Case Handling</h2>
+<p>The module handles common edge cases:</p>
+<h3 id="negative-stockholders-equity">Negative Stockholders Equity</h3>
+<ul>
+<li>Raises <code>FinancialDataError</code></li>
+<li>Indicates financial distress</li>
+</ul>
+<h3 id="zero-debt">Zero Debt</h3>
+<ul>
+<li>Sets debt ratio to 0.0</li>
+<li>WACC equals cost of equity</li>
+</ul>
+<h3 id="missing-tax-rates">Missing Tax Rates</h3>
+<ul>
+<li>Defaults to 21% (federal corporate rate)</li>
+<li>Calculates from effective tax rate when available</li>
+</ul>
+<h3 id="invalid-tax-rates">Invalid Tax Rates</h3>
+<ul>
+<li>Bounds tax rate between 0% and 50%</li>
+<li>Falls back to 21% if outside range</li>
+</ul>
+<h3 id="unreasonable-cost-of-debt">Unreasonable Cost of Debt</h3>
+<ul>
+<li>Bounds between 0% and 20%</li>
+<li>Defaults to 5% if outside range</li>
+</ul>
+<h3 id="insufficient-historical-data">Insufficient Historical Data</h3>
+<ul>
+<li>Requires minimum 3 years of data</li>
+<li>Raises <code>InsufficientDataError</code> if not met</li>
+</ul>
+<h2 id="testing">Testing</h2>
+<h3 id="unit-tests">Unit Tests</h3>
+<p>Run comprehensive unit tests:</p>
+<pre><code class="language-bash">source .venv/bin/activate
+pytest tests/test_financial_analyzer.py -v
+</code></pre>
+<p>The test suite includes:
+- Cache functionality tests
+- XBRL value extraction tests
+- ROIC calculation tests
+- WACC calculation tests
+- Spread analysis tests
+- Edge case handling tests
+- Formula correctness verification</p>
+<h3 id="integration-tests">Integration Tests</h3>
+<p>Run integration tests against real SEC data:</p>
+<pre><code class="language-bash">source .venv/bin/activate
+python test_financial_analyzer_integration.py
+</code></pre>
+<p>This tests against Apple, Microsoft, and Google 10-K filings to verify:
+- Real XBRL data extraction
+- Reasonable ROIC values
+- Reasonable WACC values
+- Correct spread calculations
+- Trend analysis accuracy</p>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<ul>
+<li><strong>First run</strong>: Fetches data from SEC EDGAR (slower, ~10-30 seconds per ticker)</li>
+<li><strong>Subsequent runs</strong>: Uses cached data (fast, &lt;1 second per ticker)</li>
+<li><strong>Cache refresh</strong>: Automatic after 90 days</li>
+<li><strong>Rate limiting</strong>: Respects SEC rate limits (10 requests per second)</li>
+</ul>
+<h2 id="data-sources">Data Sources</h2>
+<p>All data is extracted from official SEC EDGAR filings:</p>
+<ul>
+<li><strong>10-K Annual Reports</strong>: Primary source for all financial data</li>
+<li><strong>XBRL Tags</strong>: Standardized financial reporting format</li>
+<li><strong>Fallback</strong>: Text parsing when XBRL unavailable</li>
+</ul>
+<p>Common XBRL concepts used:
+- <code>OperatingIncomeLoss</code> - Operating income
+- <code>IncomeTaxExpenseBenefit</code> - Tax expense
+- <code>Assets</code> - Total assets
+- <code>CashAndCashEquivalentsAtCarryingValue</code> - Cash
+- <code>LiabilitiesCurrent</code> - Current liabilities
+- <code>DebtCurrent</code> / <code>LongTermDebt</code> - Debt
+- <code>StockholdersEquity</code> - Equity
+- <code>InterestExpense</code> - Interest expense</p>
+<h2 id="validation-against-benchmarks">Validation Against Benchmarks</h2>
+<p>The module's calculations have been validated against:</p>
+<ul>
+<li><strong>Apple (AAPL)</strong>: ROIC typically 20-30%, WACC ~8-10%</li>
+<li><strong>Microsoft (MSFT)</strong>: ROIC typically 25-35%, WACC ~8-10%</li>
+<li><strong>Google (GOOGL)</strong>: ROIC typically 15-25%, WACC ~8-10%</li>
+</ul>
+<p>Tolerance: ±50bps for WACC, ±2% for ROIC compared to manual calculations and Bloomberg data.</p>
+<h2 id="integration-with-other-modules">Integration with Other Modules</h2>
+<p>This module provides the foundation for:</p>
+<ol>
+<li><strong>Valuation Calculator</strong> (Phase 4 Module 3)</li>
+<li>Uses WACC as discount rate for DCF models</li>
+<li>
+<p>Uses ROIC for growth quality assessment</p>
+</li>
+<li>
+<p><strong>Dashboard Value Card</strong> (Phase 4 Module 4)</p>
+</li>
+<li>Displays current ROIC, WACC, and spread</li>
+<li>
+<p>Shows trend indicators and durability badges</p>
+</li>
+<li>
+<p><strong>Portfolio Analyzer</strong> (Phase 4 Module 5)</p>
+</li>
+<li>Compares ROIC across portfolio holdings</li>
+<li>Identifies high-quality investments (high spread)</li>
+</ol>
+<h2 id="future-enhancements">Future Enhancements</h2>
+<p>Potential improvements for future versions:</p>
+<ol>
+<li><strong>Beta Extraction</strong>: Extract beta from 10-K risk disclosures or market data</li>
+<li><strong>Industry Benchmarking</strong>: Compare against industry averages</li>
+<li><strong>Segment Analysis</strong>: Calculate ROIC by business segment</li>
+<li><strong>Historical WACC</strong>: Track WACC changes over time</li>
+<li><strong>Monte Carlo</strong>: Probabilistic WACC scenarios</li>
+<li><strong>Real-time Updates</strong>: Integration with market data APIs for real-time rates</li>
+</ol>
+<h2 id="references">References</h2>
+<ul>
+<li><strong>ROIC</strong>: "Investment Valuation" by Aswath Damodaran</li>
+<li><strong>WACC</strong>: "Valuation: Measuring and Managing the Value of Companies" by McKinsey</li>
+<li><strong>CAPM</strong>: "The Capital Asset Pricing Model: Theory and Evidence" by Fama &amp; French</li>
+<li><strong>SEC XBRL</strong>: https://www.sec.gov/structureddata/osd-inline-xbrl.html</li>
+</ul>
+<h2 id="support">Support</h2>
+<p>For issues or questions:
+- Check test suite: <code>tests/test_financial_analyzer.py</code>
+- Run integration tests: <code>test_financial_analyzer_integration.py</code>
+- Review examples in this documentation
+- Check SEC EDGAR API status: https://www.sec.gov/edgar</p>
+<h2 id="license">License</h2>
+<p>This module is part of the edgartools project and follows the project's license.</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
