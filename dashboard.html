@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -223,13 +224,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>📈 Stock Price Monitor</h1>
             <p>Real-time monitoring of selected stocks</p>
         </div>
-        
+
         <div id="content">
             <div class="loading">Loading data...</div>
         </div>
@@ -237,8 +239,9 @@
 
     <script>
         // Configuration
-        const DATA_BASE_URL = 'data';
-        
+        // Use ./data to be explicit about relative path
+        const DATA_BASE_URL = './data';
+
         // Company names mapping
         const COMPANY_NAMES = {
             'AAPL': 'Apple Inc.',
@@ -250,42 +253,58 @@
             try {
                 // Try to load tickers from config, fallback to common ones
                 const tickers = ['AAPL', 'MSFT', 'GOOGL'];
-                
+
                 const content = document.getElementById('content');
                 const grid = document.createElement('div');
                 grid.className = 'stocks-grid';
-                
+
                 let loadedCount = 0;
-                
+                let errors = [];
+
                 for (const ticker of tickers) {
                     try {
-                        const pricesResponse = await fetch(`${DATA_BASE_URL}/prices_${ticker}.json`);
-                        const alertsResponse = await fetch(`${DATA_BASE_URL}/alerts_${ticker}.json`);
-                        
-                        if (!pricesResponse.ok || !alertsResponse.ok) {
-                            console.warn(`Missing data for ${ticker}`);
-                            continue;
+                        const pricesUrl = `${DATA_BASE_URL}/prices_${ticker}.json`;
+                        const alertsUrl = `${DATA_BASE_URL}/alerts_${ticker}.json`;
+
+                        const pricesResponse = await fetch(pricesUrl);
+                        const alertsResponse = await fetch(alertsUrl);
+
+                        if (!pricesResponse.ok) {
+                            throw new Error(`Prices 404: ${pricesUrl}`);
                         }
-                        
+                        if (!alertsResponse.ok) {
+                            throw new Error(`Alerts 404: ${alertsUrl}`);
+                        }
+
                         const pricesData = await pricesResponse.json();
                         const alertsData = await alertsResponse.json();
-                        
+
                         const card = createStockCard(ticker, pricesData, alertsData);
                         grid.appendChild(card);
                         loadedCount++;
-                        
+
                     } catch (error) {
                         console.error(`Error loading ${ticker}:`, error);
+                        errors.push(`${ticker}: ${error.message}`);
                     }
                 }
-                
+
                 if (loadedCount === 0) {
-                    displayError('No stock data available');
+                    displayError(`No stock data available. Details:<br>${errors.join('<br>')}`);
                 } else {
                     content.innerHTML = '';
                     content.appendChild(grid);
+                    if (errors.length > 0) {
+                        // Show partial errors if some loaded
+                        const errorDiv = document.createElement('div');
+                        errorDiv.style.color = 'white';
+                        errorDiv.style.textAlign = 'center';
+                        errorDiv.style.marginBottom = '20px';
+                        errorDiv.innerHTML = `⚠️ Failed to load: ${errors.join(', ')}`;
+                        content.insertBefore(errorDiv, grid);
+                    }
                 }
-                
+
             } catch (error) {
                 displayError(error.message);
             }
@@ -294,9 +313,9 @@
         function createStockCard(ticker, pricesData, alertsData) {
             const card = document.createElement('div');
             card.className = 'stock-card';
-            
+
             const prices = pricesData.prices || [];
-            
+
             if (prices.length === 0) {
                 card.innerHTML = `
                     <div class="card-header">
@@ -306,17 +325,17 @@
                 `;
                 return card;
             }
-            
+
             const sortedPrices = [...prices].sort((a, b) => {
                 return new Date(a.date) - new Date(b.date);
             });
-            
+
             const firstPrice = sortedPrices[0].close;
             const lastPrice = sortedPrices[sortedPrices.length - 1].close;
             const dropPercentage = alertsData.drop_percentage || 0;
             const alertTriggered = alertsData.alert_triggered || false;
-            
-            const lastUpdate = pricesData.last_fetch_timestamp 
+
+            const lastUpdate = pricesData.last_fetch_timestamp
                 ? new Date(pricesData.last_fetch_timestamp).toLocaleString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -327,7 +346,7 @@
                     timeZoneName: 'short'
                 })
                 : 'Unknown';
-            
+
             card.innerHTML = `
                 <div class="card-header">
                     <h2>${ticker}</h2>
@@ -387,7 +406,7 @@
                     ` : ''}
                 </div>
             `;
-            
+
             return card;
         }
 
@@ -411,4 +430,5 @@
         setInterval(loadAllStocks, 5 * 60 * 1000);
     </script>
 </body>
+
 </html>
