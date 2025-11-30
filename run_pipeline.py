@@ -342,12 +342,12 @@ def git_commit(tickers: list) -> bool:
         
         log(f"Changes detected:\n{result.stdout}")
         
-        # Add data files for all tickers
+        # Add data files for all tickers (only if they exist)
         data_files = []
         for ticker in tickers:
-            data_files.append(f"data/prices_{ticker}.json")
-            data_files.append(f"data/alerts_{ticker}.json")
-            data_files.append(f"data/financial_cache_{ticker}.json")
+            for file_pattern in [f"data/prices_{ticker}.json", f"data/alerts_{ticker}.json", f"data/financial_cache_{ticker}.json"]:
+                if os.path.exists(os.path.join(repo_dir, file_pattern)):
+                    data_files.append(file_pattern)
         
         subprocess.run(
             ["git", "add"] + data_files,
