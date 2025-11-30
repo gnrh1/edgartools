@@ -350,7 +350,7 @@ def git_commit(tickers: list) -> bool:
                     data_files.append(file_pattern)
         
         subprocess.run(
-            ["git", "add"] + data_files,
+            ["git", "add", "-f"] + data_files,
             cwd=repo_dir,
             check=True
         )
