@@ -83,7 +83,7 @@ def test_data_files_structure():
     # Import config loader
     sys.path.insert(0, str(Path(__file__).parent))
     from config.config_loader import load_tickers_config
-    from edgar.polygon import get_prices_state_path, get_alerts_path
+    from pipeline.polygon import get_prices_state_path, get_alerts_path
     
     try:
         # Load tickers from config
