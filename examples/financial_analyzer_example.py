@@ -22,7 +22,13 @@ def example_basic_usage():
     print("=" * 60)
     
     # Set SEC User-Agent (required)
-    set_identity("Example User example@example.com")
+    # Set SEC User-Agent (required)
+    import os
+    identity = os.environ.get("EDGAR_IDENTITY")
+    if identity:
+        set_identity(identity)
+    else:
+        print("Warning: EDGAR_IDENTITY not set. SEC API calls may fail.")
     
     ticker = 'AAPL'
     

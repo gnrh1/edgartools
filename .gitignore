@@ -14,4 +14,4 @@ data/.DS_Store
 **/**/.DS_Store
 **/**/**/.DS_Store
 CLAUDE.md
-internal/*
+internal/*.env

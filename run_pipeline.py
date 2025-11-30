@@ -396,11 +396,22 @@ def main() -> int:
     log("=" * 60)
     log(f"Start time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
     
+    # Load environment variables from .env if present
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        log("python-dotenv not installed. Skipping .env load.", "WARNING")
+    
     # Step 0a: Set SEC User-Agent identity (required for SEC API access)
-    from edgar import set_identity, get_identity
-    identity = get_identity()
+    # Step 0a: Set SEC User-Agent identity (required for SEC API access)
+    from edgar import set_identity
+    identity = os.environ.get("EDGAR_IDENTITY")
+    if not identity:
+        log("EDGAR_IDENTITY environment variable not set. Cannot access SEC API.", "ERROR")
+        return 1
     set_identity(identity)
-    log(f"SEC User-Agent set to: {identity}")
+    log(f"SEC User-Agent set from environment")
     
     # Step 0b: Load config
     try:

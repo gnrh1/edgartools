@@ -144,8 +144,13 @@ def main():
     
     # Set SEC identity if not already set
     if not get_identity():
-        print("\nSetting SEC User-Agent identity...")
-        set_identity("Financial Analyzer Integration Test test@example.com")
+        import os
+        identity = os.environ.get("EDGAR_IDENTITY")
+        if identity:
+            set_identity(identity)
+        else:
+            print("\nWarning: EDGAR_IDENTITY not set. Using placeholder...")
+            set_identity("Financial Analyzer Integration Test test@example.com")
     
     print(f"Using SEC User-Agent: {get_identity()}")
     

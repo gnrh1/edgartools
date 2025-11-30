@@ -264,7 +264,14 @@ def extract_roic_history(ticker: str, years: int = 5) -> ROICData:
     try:
         # Ensure SEC identity is set
         if not get_identity():
-            set_identity("Financial Analyzer User-Agent financial-analyzer@example.com")
+            # Ensure identity is set
+            if not get_identity():
+                import os
+                identity = os.environ.get("EDGAR_IDENTITY")
+                if identity:
+                    set_identity(identity)
+                else:
+                    log.warning("EDGAR_IDENTITY not set. SEC API calls may fail.")
         
         company = Company(ticker)
         
@@ -468,7 +475,14 @@ def extract_wacc_components(
     try:
         # Ensure SEC identity is set
         if not get_identity():
-            set_identity("Financial Analyzer User-Agent financial-analyzer@example.com")
+            # Ensure identity is set
+            if not get_identity():
+                import os
+                identity = os.environ.get("EDGAR_IDENTITY")
+                if identity:
+                    set_identity(identity)
+                else:
+                    log.warning("EDGAR_IDENTITY not set. SEC API calls may fail.")
         
         company = Company(ticker)
         
