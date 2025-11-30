@@ -41,7 +41,7 @@ def test_polygon_functions():
     print("\nTesting polygon module functions...")
     
     try:
-        from edgar.polygon import (
+        from pipeline.polygon import (
             fetch_last_5_working_days_prices,
             detect_price_drop_alert,
             get_prices_state_path,

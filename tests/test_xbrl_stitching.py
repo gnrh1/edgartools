@@ -290,7 +290,7 @@ def test_determine_optimal_periods():
     assert optimal_periods
     assert len(optimal_periods) == 4
     period_keys = [op['period_key'] for op in optimal_periods]
-    assert period_keys == ['instant_2024-09-28','instant_2023-09-30','instant_2022-09-24','instant_2021-09-25']
+    assert period_keys == ['instant_2025-09-27', 'instant_2024-09-28','instant_2023-09-30','instant_2022-09-24']
 
     c = Company("ORCL")
     filings = c.latest("10-K", 4)
@@ -298,7 +298,7 @@ def test_determine_optimal_periods():
     optimal_periods = determine_optimal_periods(xbrls, "BalanceSheet")
     print(optimal_periods)
     period_keys = [op['period_key'] for op in optimal_periods]
-    assert period_keys == ['instant_2024-05-31', 'instant_2023-05-31', 'instant_2022-05-31', 'instant_2021-05-31']
+    assert period_keys == ['instant_2025-05-31', 'instant_2024-05-31', 'instant_2023-05-31', 'instant_2022-05-31']
 
 def test_stitch_balance_sheet():
     statements = get_statements("ORCL")

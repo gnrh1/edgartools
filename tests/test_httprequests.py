@@ -50,7 +50,7 @@ def test_get_with_retry_for_redirect(status_code, monkeypatch):
             get_with_retry(url="http://example.com")
             mock_retry.assert_called_once_with(url="http://example.com/redirected",
                                                identity=os.environ['EDGAR_IDENTITY'],
-                                               headers={'User-Agent': 'Dev Gunning developer-gunning@gmail.com'},
+                                               headers={'User-Agent': os.environ['EDGAR_IDENTITY']},
                                                identity_callable=None)
 
 
@@ -86,7 +86,7 @@ async def test_get_with_retry_async_for_redirect(status_code):
             get_with_retry(url="http://example.com")
             mock_retry.assert_called_once_with(url="http://example.com/redirected",
                                             identity=os.environ['EDGAR_IDENTITY'],
-                                            headers={'User-Agent': 'Dev Gunning developer-gunning@gmail.com'},
+                                            headers={'User-Agent': os.environ['EDGAR_IDENTITY']},
                                             identity_callable=None)
 
 def test_post_with_retry():
