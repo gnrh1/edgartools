@@ -14,16 +14,37 @@ import tempfile
 import pytest
 
 # Import modules to be created
-from edgar.sec_filings import FilingError, fetch_recent_filings
-from edgar.filing_scorer import score_filing_relevance, rank_filings_by_relevance
-from edgar.filing_summarizer import extract_key_points, create_filing_summary
-from edgar.filing_context_appender import append_filing_context_to_alert, enrich_all_alerts_with_filings
+from pipeline.sec_filings import (
+    fetch_recent_filings,
+    _extract_filing_summary,
+    get_drop_date_from_alert,
+    FilingError
+)
+from pipeline.enrichment import (
+    append_filing_context_to_alert,
+    enrich_all_alerts_with_filings,
+    get_filing_context_from_alert,
+    has_filing_context,
+    clear_filing_context,
+    get_filing_context_summary,
+    validate_filing_context_structure,
+    safe_enrich_all_alerts
+)
+from pipeline.scoring import (
+    score_filing_relevance,
+    rank_filings_by_relevance,
+    get_top_n_relevant_filings
+)
+from pipeline.summarizer import (
+    create_filing_summary,
+    extract_key_points
+)
 
 
 class TestSECFilingFetcher:
     """Test Unit 1: SEC Filing Fetcher."""
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_fetch_8k_filings(self, mock_company_class):
         """Test 1a: Fetch 8-K filings for AAPL (MOCKED)."""
         # Mock company and filings
@@ -55,7 +76,7 @@ class TestSECFilingFetcher:
         mock_company_class.assert_called_once_with('AAPL')
         mock_company.get_filings.assert_called_once_with(form='8-K', trigger_full_load=False)
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_fetch_multiple_form_types(self, mock_company_class):
         """Test 1b: Fetch multiple form types."""
         mock_company = MagicMock()
@@ -103,7 +124,7 @@ class TestSECFilingFetcher:
         mock_company.get_filings.assert_any_call(form='8-K', trigger_full_load=False)
         mock_company.get_filings.assert_any_call(form='10-Q', trigger_full_load=False)
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_fetch_no_filings_found(self, mock_company_class):
         """Test 1c: No filings found."""
         mock_company = MagicMock()
@@ -121,7 +142,7 @@ class TestSECFilingFetcher:
         assert len(filings) == 0
         assert isinstance(filings, list)
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_fetch_invalid_ticker(self, mock_company_class):
         """Test 1d: Invalid ticker."""
         mock_company_class.side_effect = Exception("Company not found")
@@ -130,8 +151,8 @@ class TestSECFilingFetcher:
         with pytest.raises(FilingError, match="Failed to load company INVALID"):
             fetch_recent_filings('INVALID', days_back=2, form_types=['8-K'])
 
-    @patch('edgar.sec_filings.Company')
-    @patch('edgar.sec_filings.time.sleep')
+    @patch('pipeline.sec_filings.Company')
+    @patch('pipeline.sec_filings.time.sleep')
     def test_fetch_api_timeout(self, mock_sleep, mock_company_class):
         """Test 1e: API timeout."""
         mock_company = MagicMock()
@@ -329,7 +350,7 @@ class TestFilingContextAppender:
             }
         ]
         
-        with patch('edgar.filing_context_appender.Path') as mock_path:
+        with patch('pipeline.enrichment.Path') as mock_path:
             mock_path.return_value = self.alerts_path
             
             result = append_filing_context_to_alert('AAPL', filings)
@@ -346,7 +367,7 @@ class TestFilingContextAppender:
 
     def test_no_filings(self):
         """Test 4b: No filings."""
-        with patch('edgar.filing_context_appender.Path') as mock_path:
+        with patch('pipeline.enrichment.Path') as mock_path:
             mock_path.return_value = self.alerts_path
             
             result = append_filing_context_to_alert('AAPL', [])
@@ -373,7 +394,7 @@ class TestFilingContextAppender:
             }
         ]
         
-        with patch('edgar.filing_context_appender.Path') as mock_path:
+        with patch('pipeline.enrichment.Path') as mock_path:
             mock_path.return_value = self.alerts_path
             
             append_filing_context_to_alert('AAPL', filings)
@@ -389,7 +410,7 @@ class TestFilingContextAppender:
             assert updated_alert['reason'] == 'price_drop_5.33%'
             assert 'filing_context' in updated_alert
 
-    @patch('edgar.filing_context_appender.Path')
+    @patch('pipeline.enrichment.Path')
     def test_missing_alert_file(self, mock_path):
         """Test 4d: Missing alert file."""
         mock_path.return_value.exists.return_value = False
@@ -398,10 +419,10 @@ class TestFilingContextAppender:
         
         assert result is False
 
-    @patch('edgar.sec_filings.fetch_recent_filings')
-    @patch('edgar.filing_scorer.rank_filings_by_relevance')
-    @patch('edgar.filing_summarizer.create_filing_summary')
-    @patch('edgar.filing_context_appender.append_filing_context_to_alert')
+    @patch('pipeline.sec_filings.fetch_recent_filings')
+    @patch('pipeline.scoring.rank_filings_by_relevance')
+    @patch('pipeline.summarizer.create_filing_summary')
+    @patch('pipeline.enrichment.append_filing_context_to_alert')
     def test_enrich_all_alerts_integration(self, mock_append, mock_summary, mock_rank, mock_fetch):
         """Test 4e: Enrich all alerts integration."""
         # Setup mocks
@@ -500,8 +521,8 @@ class TestDashboardFilingRenderer:
 class TestErrorHandling:
     """Test Unit 6: Error Handling & Edge Cases."""
 
-    @patch('edgar.sec_filings.fetch_recent_filings')
-    @patch('edgar.filing_context_appender.append_filing_context_to_alert')
+    @patch('pipeline.sec_filings.fetch_recent_filings')
+    @patch('pipeline.enrichment.append_filing_context_to_alert')
     def test_missing_ticker(self, mock_append, mock_fetch):
         """Test 6a: Missing ticker."""
         mock_fetch.side_effect = FilingError("Company not found")
@@ -516,7 +537,7 @@ class TestErrorHandling:
             # If exception crashes the system, test fails
             assert False, "Function should not crash on missing ticker"
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_edgartools_import_fails(self, mock_company):
         """Test 6b: edgartools import fails."""
         # This would be tested at import level
@@ -536,7 +557,7 @@ class TestErrorHandling:
             f.write('{"invalid": json content}')
         
         try:
-            with patch('edgar.filing_context_appender.Path') as mock_path:
+            with patch('pipeline.enrichment.Path') as mock_path:
                 mock_path.return_value = alerts_path
                 
                 result = append_filing_context_to_alert('AAPL', [])
@@ -547,8 +568,8 @@ class TestErrorHandling:
             alerts_path.unlink()
             Path(temp_dir).rmdir()
 
-    @patch('edgar.sec_filings.fetch_recent_filings')
-    @patch('edgar.filing_context_appender.append_filing_context_to_alert')
+    @patch('pipeline.sec_filings.fetch_recent_filings')
+    @patch('pipeline.enrichment.append_filing_context_to_alert')
     def test_partial_success(self, mock_append, mock_fetch):
         """Test 6d: Partial success."""
         # Mock AAPL success, MSFT failure
@@ -568,7 +589,7 @@ class TestErrorHandling:
             assert mock_fetch.call_count == 2
             assert mock_log.error.call_count >= 0 or mock_log.info.call_count >= 0
 
-    @patch('edgar.sec_filings.Company')
+    @patch('pipeline.sec_filings.Company')
     def test_api_rate_limit_hit(self, mock_company):
         """Test 6e: API rate limit hit."""
         mock_company_instance = MagicMock()
@@ -587,7 +608,7 @@ class TestErrorHandling:
 # Utility function to get drop date from alert (for testing)
 def get_drop_date_from_alert(ticker):
     """Helper function to extract drop date from alert data."""
-    from edgar.polygon import get_alerts_path
+    from pipeline.polygon import get_alerts_path
     
     alert_path = get_alerts_path(ticker)
     if alert_path.exists():

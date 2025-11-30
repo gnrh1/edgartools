@@ -56,7 +56,7 @@ def fetch_prices(tickers: list) -> bool:
     log("=" * 60)
     
     try:
-        from edgar.polygon import fetch_last_5_working_days_prices
+        from pipeline.polygon import fetch_last_5_working_days_prices
         
         for ticker in tickers:
             log(f"\nFetching {ticker}...")
@@ -83,7 +83,7 @@ def detect_alerts(tickers: list) -> bool:
     log("=" * 60)
     
     try:
-        from edgar.polygon import detect_price_drop_alert
+        from pipeline.polygon import detect_price_drop_alert
         
         for ticker in tickers:
             log(f"\nAnalyzing {ticker}...")
@@ -112,7 +112,7 @@ def enrich_with_sec_filings(tickers: list) -> bool:
     log("=" * 60)
     
     try:
-        from edgar.filing_context_appender import safe_enrich_all_alerts
+        from pipeline.enrichment import safe_enrich_all_alerts
         
         results = safe_enrich_all_alerts(tickers)
         
@@ -146,7 +146,7 @@ def validate_outputs(tickers: list) -> bool:
     log(f"Validating outputs for {len(tickers)} tickers...")
     log("=" * 60)
     
-    from edgar.polygon import get_prices_state_path, get_alerts_path
+    from pipeline.polygon import get_prices_state_path, get_alerts_path
     
     # Determine project root (where this script is located)
     script_dir = Path(__file__).parent

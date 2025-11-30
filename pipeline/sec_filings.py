@@ -7,7 +7,7 @@ and extract relevant information for price alert context.
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Dict, Any, Optional, Union
 
 from edgar.core import log
@@ -76,6 +76,9 @@ def fetch_recent_filings(ticker: str, days_back: int = 2, form_types: List[str] 
                         filing_date = datetime.strptime(filing_date, '%Y-%m-%d')
                     except ValueError:
                         continue
+                elif isinstance(filing_date, date) and not isinstance(filing_date, datetime):
+                    # Convert date to datetime at midnight
+                    filing_date = datetime.combine(filing_date, datetime.min.time())
                 elif not isinstance(filing_date, datetime):
                     continue
                 
@@ -143,7 +146,7 @@ def get_drop_date_from_alert(ticker: str) -> str:
         Date string in YYYY-MM-DD format (defaults to today)
     """
     try:
-        from edgar.polygon import get_alerts_path
+        from pipeline.polygon import get_alerts_path
         import json
         from pathlib import Path
         

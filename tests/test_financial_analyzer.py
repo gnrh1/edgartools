@@ -10,7 +10,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from edgar.financial_analyzer import (
+from pipeline.financial_analyzer import (
     extract_roic_history,
     extract_wacc_components,
     calculate_wacc,
@@ -125,7 +125,7 @@ class TestCacheFunctions:
             }
         }
         
-        with patch('edgar.financial_analyzer.get_cache_path') as mock_path:
+        with patch('pipeline.financial_analyzer.get_cache_path') as mock_path:
             cache_file = tmp_path / 'financial_cache_TEST.json'
             mock_path.return_value = cache_file
             
@@ -141,7 +141,7 @@ class TestCacheFunctions:
     
     def test_load_cache_missing_file(self, tmp_path):
         """Test loading cache when file doesn't exist"""
-        with patch('edgar.financial_analyzer.get_cache_path') as mock_path:
+        with patch('pipeline.financial_analyzer.get_cache_path') as mock_path:
             cache_file = tmp_path / 'missing_cache.json'
             mock_path.return_value = cache_file
             
@@ -152,7 +152,7 @@ class TestCacheFunctions:
         """Test that old cache is not loaded"""
         from datetime import datetime, timedelta
         
-        with patch('edgar.financial_analyzer.get_cache_path') as mock_path:
+        with patch('pipeline.financial_analyzer.get_cache_path') as mock_path:
             cache_file = tmp_path / 'old_cache.json'
             mock_path.return_value = cache_file
             
@@ -219,9 +219,9 @@ class TestExtractROICHistory:
     
     def test_extract_roic_with_mock_data(self, mock_company):
         """Test ROIC extraction with mocked company data"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     roic_data = extract_roic_history('AAPL', years=3)
                     
                     assert isinstance(roic_data, ROICData)
@@ -245,7 +245,7 @@ class TestExtractROICHistory:
             }
         }
         
-        with patch('edgar.financial_analyzer.load_from_cache', return_value=cached_data):
+        with patch('pipeline.financial_analyzer.load_from_cache', return_value=cached_data):
             roic_data = extract_roic_history('AAPL')
             
             assert roic_data.years == [2021, 2022, 2023]
@@ -261,8 +261,8 @@ class TestExtractROICHistory:
         filings_mock.latest = Mock(return_value=filings)
         mock_company.get_filings = Mock(return_value=filings_mock)
         
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
                 with pytest.raises(InsufficientDataError):
                     extract_roic_history('INVALID')
     
@@ -286,9 +286,9 @@ class TestExtractWACCComponents:
     
     def test_extract_wacc_components_with_mock_data(self, mock_company):
         """Test WACC components extraction with mocked data"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     components = extract_wacc_components('AAPL')
                     
                     assert isinstance(components, WACCComponents)
@@ -301,9 +301,9 @@ class TestExtractWACCComponents:
     
     def test_wacc_components_with_overrides(self, mock_company):
         """Test WACC components with custom parameters"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     components = extract_wacc_components(
                         'AAPL',
                         risk_free_rate=0.05,
@@ -332,7 +332,7 @@ class TestExtractWACCComponents:
             }
         }
         
-        with patch('edgar.financial_analyzer.load_from_cache', return_value=cached_data):
+        with patch('pipeline.financial_analyzer.load_from_cache', return_value=cached_data):
             components = extract_wacc_components('AAPL')
             
             assert components.cost_of_equity == 0.095
@@ -364,9 +364,9 @@ class TestCalculateWACC:
     
     def test_calculate_wacc_basic(self, mock_company):
         """Test basic WACC calculation"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     wacc_result = calculate_wacc('AAPL')
                     
                     assert isinstance(wacc_result, WACCResult)
@@ -376,9 +376,9 @@ class TestCalculateWACC:
     
     def test_calculate_wacc_with_sensitivity(self, mock_company):
         """Test WACC calculation with sensitivity scenarios"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     wacc_result = calculate_wacc('AAPL', sensitivity=True)
                     
                     assert 'base' in wacc_result.scenarios
@@ -392,9 +392,9 @@ class TestCalculateWACC:
     
     def test_calculate_wacc_with_overrides(self, mock_company):
         """Test WACC calculation with custom parameters"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     wacc_result = calculate_wacc(
                         'AAPL',
                         overrides={'risk_free_rate': 0.05, 'beta': 1.5}
@@ -427,7 +427,7 @@ class TestCalculateWACC:
         expected_wacc = 0.08185
         
         # Mock extract_wacc_components to return our test data
-        with patch('edgar.financial_analyzer.extract_wacc_components', return_value=components):
+        with patch('pipeline.financial_analyzer.extract_wacc_components', return_value=components):
             wacc_result = calculate_wacc('TEST')
             
             # Allow small floating point error
@@ -465,9 +465,9 @@ class TestCalculateSpread:
     
     def test_calculate_spread_basic(self, mock_company):
         """Test basic spread calculation"""
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     spread_result = calculate_spread('AAPL', years=3)
                     
                     assert isinstance(spread_result, SpreadResult)
@@ -491,9 +491,9 @@ class TestCalculateSpread:
             components_breakdown=Mock()
         )
         
-        with patch('edgar.financial_analyzer.extract_roic_history', return_value=roic_data):
-            with patch('edgar.financial_analyzer.calculate_wacc', return_value=wacc_result):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.extract_roic_history', return_value=roic_data):
+            with patch('pipeline.financial_analyzer.calculate_wacc', return_value=wacc_result):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     spread_result = calculate_spread('TEST')
                     
                     # Spread should be improving (0.07, 0.10, 0.14)
@@ -516,9 +516,9 @@ class TestCalculateSpread:
             components_breakdown=Mock()
         )
         
-        with patch('edgar.financial_analyzer.extract_roic_history', return_value=roic_data):
-            with patch('edgar.financial_analyzer.calculate_wacc', return_value=wacc_result):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.extract_roic_history', return_value=roic_data):
+            with patch('pipeline.financial_analyzer.calculate_wacc', return_value=wacc_result):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     spread_result = calculate_spread('TEST')
                     
                     # Spread should be deteriorating
@@ -541,9 +541,9 @@ class TestCalculateSpread:
             components_breakdown=Mock()
         )
         
-        with patch('edgar.financial_analyzer.extract_roic_history', return_value=roic_data):
-            with patch('edgar.financial_analyzer.calculate_wacc', return_value=wacc_result):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.extract_roic_history', return_value=roic_data):
+            with patch('pipeline.financial_analyzer.calculate_wacc', return_value=wacc_result):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     spread_result = calculate_spread('TEST')
                     
                     # Current spread is negative
@@ -624,8 +624,8 @@ class TestEdgeCases:
         
         mock_company.latest_tenk = tenk
         
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
                 with pytest.raises(FinancialDataError):
                     extract_wacc_components('TEST')
     
@@ -643,9 +643,9 @@ class TestEdgeCases:
         
         balance_sheet.to_dataframe = zero_debt_to_df
         
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
-                with patch('edgar.financial_analyzer.save_to_cache'):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
+                with patch('pipeline.financial_analyzer.save_to_cache'):
                     components = extract_wacc_components('TEST')
                     
                     # Should have zero debt ratio
@@ -658,8 +658,8 @@ class TestEdgeCases:
         mock_company = Mock()
         mock_company.latest_tenk = None
         
-        with patch('edgar.financial_analyzer.Company', return_value=mock_company):
-            with patch('edgar.financial_analyzer.load_from_cache', return_value=None):
+        with patch('pipeline.financial_analyzer.Company', return_value=mock_company):
+            with patch('pipeline.financial_analyzer.load_from_cache', return_value=None):
                 with pytest.raises(FinancialDataError):
                     extract_wacc_components('TEST')
     

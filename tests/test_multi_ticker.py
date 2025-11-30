@@ -9,14 +9,22 @@ import tempfile
 import pytest
 
 from config.config_loader import load_tickers_config, ConfigError
-from edgar.polygon import (
+from pipeline.polygon import (
+    fetch_last_5_working_days_prices,
+    detect_price_drop_alert,
     get_prices_state_path,
     get_alerts_path,
     save_prices_state,
     save_alerts,
-    detect_price_drop_alert,
-    get_prices_state,
+    get_prices_state
 )
+from pipeline.enrichment import (
+    enrich_all_alerts_with_filings,
+    get_filing_context_from_alert,
+    has_filing_context,
+    clear_filing_context
+)
+
 
 
 class TestConfigLoader:
@@ -284,11 +292,11 @@ class TestMultiTickerAlertDetection:
 class TestMultiTickerPipelineIntegration:
     """Integration tests for multi-ticker pipeline."""
 
-    @patch('edgar.polygon.httpx.Client')
-    @patch('edgar.polygon.time.sleep')
+    @patch('pipeline.polygon.httpx.Client')
+    @patch('pipeline.polygon.time.sleep')
     def test_fetch_for_multiple_tickers_sequentially(self, mock_sleep, mock_client_class):
         """Test that pipeline can fetch prices for multiple tickers."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
         
         working_days = get_last_5_working_days()
         

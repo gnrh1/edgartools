@@ -48,11 +48,6 @@ from edgar.xbrl import XBRL
 from edgar.files.html import Document
 from edgar.financials import Financials, MultiFinancials
 from edgar.storage import use_local_storage, is_using_local_storage, download_edgar_data, download_filings
-from edgar.polygon import (fetch_aapl_prices, 
-                           fetch_aapl_last_7_days,
-                           get_prices_state, 
-                           save_prices_state,
-                           PolygonAPIError)
 
 # Another name for get_current_filings
 get_latest_filings = get_current_filings

@@ -7,18 +7,19 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from edgar.polygon import (
-    PolygonAPIError,
+from pipeline.polygon import (
     fetch_aapl_prices,
     fetch_aapl_last_7_days,
     get_prices_state,
-    get_prices_state_path,
     save_prices_state,
-    get_empty_state,
-    get_polygon_api_key,
+    PolygonAPIError,
+    fetch_last_5_working_days_prices,
     detect_price_drop_alert,
+    get_prices_state_path,
     get_alerts_path,
-    save_alerts
+    save_alerts,
+    get_empty_state,
+    get_polygon_api_key
 )
 
 
@@ -83,7 +84,7 @@ class TestPolygonAPI:
             api_key = get_polygon_api_key()
             assert api_key == 'test-key'
 
-    @patch('edgar.polygon.httpx.Client')
+    @patch('pipeline.polygon.httpx.Client')
     def test_fetch_aapl_prices_success(self, mock_client_class):
         """Test successful AAPL prices fetch."""
         mock_response = MagicMock()
@@ -106,7 +107,7 @@ class TestPolygonAPI:
             assert 'last_fetch_timestamp' in result
             assert len(result['prices']) > 0
 
-    @patch('edgar.polygon.httpx.Client')
+    @patch('pipeline.polygon.httpx.Client')
     def test_fetch_aapl_prices_with_results(self, mock_client_class):
         """Test fetch with paginated results."""
         mock_response = MagicMock()
@@ -126,7 +127,7 @@ class TestPolygonAPI:
             result = fetch_aapl_prices()
             assert len(result['prices']) == 2
 
-    @patch('edgar.polygon.httpx.Client')
+    @patch('pipeline.polygon.httpx.Client')
     def test_fetch_aapl_prices_http_error(self, mock_client_class):
         """Test that HTTP errors are handled."""
         mock_client = MagicMock()
@@ -139,7 +140,7 @@ class TestPolygonAPI:
 
     def test_fetch_aapl_last_7_days(self):
         """Test convenience function for last 7 days."""
-        with patch('edgar.polygon.fetch_aapl_prices') as mock_fetch:
+        with patch('pipeline.polygon.fetch_aapl_prices') as mock_fetch:
             mock_fetch.return_value = {'prices': []}
             
             result = fetch_aapl_last_7_days(api_key='test-key')
@@ -416,7 +417,7 @@ class TestFetchLast5WorkingDays:
 
     def test_get_last_5_working_days_returns_5_dates(self):
         """Test that get_last_5_working_days returns exactly 5 dates."""
-        from edgar.polygon import get_last_5_working_days
+        from pipeline.polygon import get_last_5_working_days
 
         days = get_last_5_working_days()
 
@@ -427,7 +428,7 @@ class TestFetchLast5WorkingDays:
     def test_get_last_5_working_days_returns_weekdays_only(self):
         """Test that all returned dates are weekdays (Mon-Fri)."""
         from datetime import datetime
-        from edgar.polygon import get_last_5_working_days
+        from pipeline.polygon import get_last_5_working_days
 
         days = get_last_5_working_days()
 
@@ -438,7 +439,7 @@ class TestFetchLast5WorkingDays:
     def test_get_last_5_working_days_returns_chronological_order(self):
         """Test that dates are returned in chronological order."""
         from datetime import datetime
-        from edgar.polygon import get_last_5_working_days
+        from pipeline.polygon import get_last_5_working_days
 
         days = get_last_5_working_days()
         dates = [datetime.strptime(day, '%Y-%m-%d') for day in days]
@@ -446,11 +447,11 @@ class TestFetchLast5WorkingDays:
         for i in range(len(dates) - 1):
             assert dates[i] < dates[i + 1]
 
-    @patch('edgar.polygon.httpx.Client')
-    @patch('edgar.polygon.time.sleep')
+    @patch('pipeline.polygon.httpx.Client')
+    @patch('pipeline.polygon.time.sleep')
     def test_fetch_last_5_working_days_prices_success(self, mock_sleep, mock_client_class):
         """Test successful fetch of last 5 working days prices."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
 
@@ -495,11 +496,11 @@ class TestFetchLast5WorkingDays:
             assert 'volume' in price
             assert price['date'] == working_days[i]
 
-    @patch('edgar.polygon.httpx.Client')
-    @patch('edgar.polygon.time.sleep')
+    @patch('pipeline.polygon.httpx.Client')
+    @patch('pipeline.polygon.time.sleep')
     def test_fetch_last_5_working_days_prices_rate_limiting(self, mock_sleep, mock_client_class):
         """Test that rate limiting (15-second delays) is applied."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
 
@@ -528,11 +529,11 @@ class TestFetchLast5WorkingDays:
         for call in mock_sleep.call_args_list:
             assert call[0][0] == 15
 
-    @patch('edgar.polygon.httpx.Client')
-    @patch('edgar.polygon.time.sleep')
+    @patch('pipeline.polygon.httpx.Client')
+    @patch('pipeline.polygon.time.sleep')
     def test_fetch_last_5_working_days_prices_skips_non_ok_status(self, mock_sleep, mock_client_class):
         """Test that non-OK status responses (holidays) are skipped gracefully."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
 
@@ -570,11 +571,11 @@ class TestFetchLast5WorkingDays:
         assert skipped_date not in dates
         assert mock_sleep.call_count == 3
 
-    @patch('edgar.polygon.httpx.Client')
-    @patch('edgar.polygon.time.sleep')
+    @patch('pipeline.polygon.httpx.Client')
+    @patch('pipeline.polygon.time.sleep')
     def test_fetch_last_5_working_days_prices_retries_on_transient_failure(self, mock_sleep, mock_client_class):
         """Test that transient failures are retried before succeeding."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
 
@@ -607,10 +608,10 @@ class TestFetchLast5WorkingDays:
         assert durations.count(5) == 1  # Retry delay
         assert durations.count(15) == 4  # Rate limiting delays
 
-    @patch('edgar.polygon.httpx.Client')
+    @patch('pipeline.polygon.httpx.Client')
     def test_fetch_last_5_working_days_prices_includes_ohlcv(self, mock_client_class):
         """Test that prices include open, high, low, close, volume."""
-        from edgar.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
+        from pipeline.polygon import fetch_last_5_working_days_prices, get_last_5_working_days
 
         working_days = get_last_5_working_days()
 
@@ -635,7 +636,7 @@ class TestFetchLast5WorkingDays:
         mock_client.get.side_effect = responses
 
         with patch.dict(os.environ, {'POLYGON_API_KEY': 'test-key'}):
-            with patch('edgar.polygon.time.sleep'):
+            with patch('pipeline.polygon.time.sleep'):
                 state = fetch_last_5_working_days_prices()
 
         # Verify all OHLCV fields are present

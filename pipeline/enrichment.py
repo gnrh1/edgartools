@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from edgar.core import log
-from edgar.polygon import get_alerts_path
+from pipeline.polygon import get_alerts_path
 
 
 def append_filing_context_to_alert(ticker: str, filings: List[Dict[str, Any]]) -> bool:
@@ -71,9 +71,9 @@ def enrich_all_alerts_with_filings(tickers: List[str]) -> Dict[str, List[str]]:
     Returns:
         Dictionary with 'success' and 'failed' ticker lists
     """
-    from edgar.sec_filings import fetch_recent_filings, get_drop_date_from_alert
-    from edgar.filing_scorer import rank_filings_by_relevance, get_top_n_relevant_filings
-    from edgar.filing_summarizer import create_filing_summary
+    from pipeline.sec_filings import fetch_recent_filings, get_drop_date_from_alert
+    from pipeline.scoring import rank_filings_by_relevance, get_top_n_relevant_filings
+    from pipeline.summarizer import create_filing_summary
     
     results = {'success': [], 'failed': []}
     
@@ -82,7 +82,8 @@ def enrich_all_alerts_with_filings(tickers: List[str]) -> Dict[str, List[str]]:
             log.info(f"Processing {ticker} for SEC filing context...")
             
             # Step 1: Fetch recent filings
-            filings = fetch_recent_filings(ticker, days_back=2, form_types=['8-K', '10-Q', '10-K'])
+            # Increased days_back to 90 to ensure we capture relevant quarterly/annual filings
+            filings = fetch_recent_filings(ticker, days_back=90, form_types=['8-K', '10-Q', '10-K'])
             
             if not filings:
                 log.info(f"No recent filings found for {ticker}")
@@ -265,9 +266,9 @@ def safe_enrich_all_alerts(tickers: List[str]) -> Dict[str, List[str]]:
     Returns:
         Dictionary with 'success', 'failed', and 'errors' keys
     """
-    from edgar.sec_filings import fetch_recent_filings, get_drop_date_from_alert, FilingError
-    from edgar.filing_scorer import rank_filings_by_relevance, get_top_n_relevant_filings
-    from edgar.filing_summarizer import create_filing_summary
+    from pipeline.sec_filings import fetch_recent_filings, get_drop_date_from_alert, FilingError
+    from pipeline.scoring import rank_filings_by_relevance, get_top_n_relevant_filings
+    from pipeline.summarizer import create_filing_summary
     
     results = {
         'success': [],
@@ -281,7 +282,8 @@ def safe_enrich_all_alerts(tickers: List[str]) -> Dict[str, List[str]]:
             
             # Step 1: Fetch recent filings
             try:
-                filings = fetch_recent_filings(ticker, days_back=2, form_types=['8-K', '10-Q', '10-K'])
+                # Increased days_back to 90 to ensure we capture relevant quarterly/annual filings
+                filings = fetch_recent_filings(ticker, days_back=90, form_types=['8-K', '10-Q', '10-K'])
             except FilingError as e:
                 results['failed'].append(ticker)
                 results['errors'][ticker] = f"Filing fetch failed: {e}"
