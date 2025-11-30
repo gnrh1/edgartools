@@ -252,11 +252,7 @@ def get_identity() -> str:
     Get the sec identity used to set the UserAgent string
     :return:
     """
-    identity = os.environ.get(edgar_identity)
-    if not identity:
-        identity = ask_for_identity()
-        os.environ[edgar_identity] = identity
-    return identity
+    return 'Ravi Bala (uktamilfilms@gmail.com)'
 
 
 @lru_cache(maxsize=None)
