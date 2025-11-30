@@ -1,7 +1,9 @@
 # Netlify configuration for AAPL Price Dashboard
 [build]
-  # No build command needed - static HTML
-  publish = "."
+  # Build command to create a clean distribution folder
+  # This avoids uploading the entire repo (including large data/ folder) to Netlify
+  command = "mkdir -p dist/data && cp dashboard.html dist/index.html && cp data/prices_*.json data/alerts_*.json dist/data/"
+  publish = "dist"
   
 [[redirects]]
   # Redirect root to dashboard
