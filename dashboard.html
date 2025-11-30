@@ -357,7 +357,26 @@
                         ${dropPercentage >= 0 ? '▼' : '▲'} ${Math.abs(dropPercentage).toFixed(2)}%
                     </div>
                 </div>
-                
+
+                <!-- SEC Filing Context -->
+                ${alertsData.filing_context && alertsData.filing_context.length > 0 ? `
+                    <div class="filing-context">
+                        <h4>📄 Related SEC Filings</h4>
+                        <ul>
+                            ${alertsData.filing_context.slice(0, 3).map(filing => `
+                                <li>
+                                    <a href="${filing.url}" target="_blank" style="color: #4a5568; text-decoration: none;">
+                                        ${filing.form_type}: ${filing.key_points.join(', ') || 'No details'}
+                                    </a>
+                                    <span class="relevance" style="font-size: 0.8rem; color: #666;">
+                                        ${filing.relevance_score > 0.7 ? '🔴 Likely related' : '🟡 Possibly related'}
+                                    </span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
                 <div class="metadata">
                     <div><strong>Last updated:</strong> ${lastUpdate}</div>
                     <div><strong>Data points:</strong> ${prices.length}</div>
