@@ -6,8 +6,9 @@ This script orchestrates:
 1. Loading monitored stocks from config/tickers.yaml
 2. Fetching stock prices for the last 5 working days for each ticker
 3. Detecting price drop alerts (5%+ threshold) for each ticker
-4. Validating outputs
-5. Committing changes to Git
+4. Enriching alerts with SEC filing context (Phase 3)
+5. Validating outputs
+6. Committing changes to Git
 
 Usage:
     export POLYGON_API_KEY="your_api_key"
@@ -104,6 +105,41 @@ def detect_alerts(tickers: list) -> bool:
         return False
 
 
+def enrich_with_sec_filings(tickers: list) -> bool:
+    """Execute Task 3: Enrich alerts with SEC filing context for all monitored tickers."""
+    log("=" * 60)
+    log(f"TASK 3: Enriching alerts with SEC filing context for {len(tickers)} tickers")
+    log("=" * 60)
+    
+    try:
+        from edgar.filing_context_appender import safe_enrich_all_alerts
+        
+        results = safe_enrich_all_alerts(tickers)
+        
+        successful = len(results['success'])
+        failed = len(results['failed'])
+        total = len(tickers)
+        
+        log(f"\nSEC filing enrichment summary:")
+        log(f"  - Successful: {successful}/{total}")
+        log(f"  - Failed: {failed}/{total}")
+        
+        if results['success']:
+            log(f"  - Successfully enriched: {', '.join(results['success'])}")
+        
+        if results['failed']:
+            log(f"  - Failed to enrich: {', '.join(results['failed'])}", "WARNING")
+            for ticker, error in results.get('errors', {}).items():
+                log(f"    {ticker}: {error}", "WARNING")
+        
+        # Consider it successful if at least one ticker succeeded
+        return successful > 0
+        
+    except Exception as e:
+        log(f"Failed to enrich with SEC filings: {e}", "ERROR")
+        return False
+
+
 def validate_outputs(tickers: list) -> bool:
     """Validate that output files exist for all tickers and contain valid JSON."""
     log("=" * 60)
@@ -180,6 +216,31 @@ def validate_outputs(tickers: list) -> bool:
                 if field not in alerts_data:
                     log(f"  ERROR: alerts file missing required field '{field}'", "ERROR")
                     all_valid = False
+            
+            # Check for filing_context field (Phase 3 feature)
+            if 'filing_context' not in alerts_data:
+                log(f"  WARNING: alerts file missing 'filing_context' field (Phase 3 feature)", "WARNING")
+            elif not isinstance(alerts_data['filing_context'], list):
+                log(f"  ERROR: alerts file 'filing_context' is not a list", "ERROR")
+                all_valid = False
+            else:
+                # Validate filing_context structure if present
+                context_count = len(alerts_data['filing_context'])
+                if context_count > 0:
+                    log(f"  ✓ filing_context contains {context_count} filings")
+                    # Validate structure of each filing
+                    for i, filing in enumerate(alerts_data['filing_context']):
+                        if not isinstance(filing, dict):
+                            log(f"  ERROR: filing_context[{i}] is not a dictionary", "ERROR")
+                            all_valid = False
+                            continue
+                        
+                        filing_fields = ['form_type', 'filed_date', 'key_points', 'summary', 'url', 'relevance_score']
+                        for field in filing_fields:
+                            if field not in filing:
+                                log(f"  WARNING: filing_context[{i}] missing field '{field}'", "WARNING")
+                else:
+                    log(f"  ✓ filing_context is empty (no recent filings)")
             
             log(f"  ✓ alerts file is valid")
             
@@ -296,12 +357,17 @@ def main() -> int:
         log("Pipeline failed: Alert detection failed", "ERROR")
         return 1
     
-    # Step 4: Validate outputs
+    # Step 4: Enrich with SEC filings (Phase 3)
+    if not enrich_with_sec_filings(tickers):
+        log("Pipeline failed: SEC filing enrichment failed", "ERROR")
+        return 1
+    
+    # Step 5: Validate outputs
     if not validate_outputs(tickers):
         log("Pipeline failed: Output validation failed", "ERROR")
         return 1
     
-    # Step 5: Git commit
+    # Step 6: Git commit
     if not git_commit(tickers):
         log("Pipeline failed: Git commit failed", "ERROR")
         return 2
