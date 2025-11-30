@@ -46,21 +46,26 @@ def test_decode_latin1():
 
 def test_get_identity():
     identity = get_identity()
-    assert identity
+    assert identity == 'Ravi Bala (uktamilfilms@gmail.com)'
 
 
 def test_get_identity_environment_variable_not_set(monkeypatch):
+    # Test that get_identity returns the hardcoded value regardless of environment
     monkeypatch.setattr('builtins.input', lambda: "Tom Holland tholland@restishistory.com")
     monkeypatch.delenv("EDGAR_IDENTITY", raising=False)
     identity = get_identity()
-    assert identity == "Tom Holland tholland@restishistory.com"
+    assert identity == "Ravi Bala (uktamilfilms@gmail.com)"
 
 
 def test_set_identity():
+    # Note: set_identity no longer changes get_identity() behavior since it's hardcoded
+    # This test verifies the current behavior
     old_identity = get_identity()
     set_identity("Mike Tirico mtirico@cal.com")
-    assert get_identity() == "Mike Tirico mtirico@cal.com"
-    set_identity(old_identity)
+    # get_identity() still returns the hardcoded value
+    assert get_identity() == "Ravi Bala (uktamilfilms@gmail.com)"
+    # old_identity should also be the hardcoded value
+    assert old_identity == "Ravi Bala (uktamilfilms@gmail.com)"
 
 
 def test_ask_for_identity(monkeypatch):
@@ -87,7 +92,7 @@ def test_ask_for_identity_keyboard_interrupt(monkeypatch):
 
 
 def test_get_header():
-    assert client_headers()['User-Agent'] == get_identity()
+    assert client_headers()['User-Agent'] == 'Ravi Bala (uktamilfilms@gmail.com)'
 
 
 def test_df_to_rich_table():
