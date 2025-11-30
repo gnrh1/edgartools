@@ -260,14 +260,12 @@ class TestPriceDropAlertDetector:
         assert 'price_change_' in alert['reason']
 
     def test_detect_price_drop_alert_insufficient_data(self):
-        """Test insufficient data (<5 points) returns alert_triggered=false with 'insufficient_data' reason."""
-        # Create test state with only 3 data points
+        """Test insufficient data (<2 points) returns alert_triggered=false with 'insufficient_data' reason."""
+        # Create test state with only 1 data point (insufficient - need at least 2)
         test_state = {
             'timestamp': '2024-01-03T00:00:00',
             'prices': [
-                {'date': '2024-01-01', 'close': 235.50, 'volume': 1000000},
-                {'date': '2024-01-02', 'close': 233.15, 'volume': 1100000},
-                {'date': '2024-01-03', 'close': 233.15, 'volume': 1200000}
+                {'date': '2024-01-01', 'close': 235.50, 'volume': 1000000}
             ],
             'last_fetch_timestamp': '2024-01-03T00:00:00'
         }

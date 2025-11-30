@@ -81,6 +81,10 @@ def fetch_last_5_working_days_prices(ticker: str = 'AAPL', api_key: Optional[str
     between calls to respect the free tier rate limit (5 calls/minute) and
     includes retry logic for transient failures or market holidays.
     
+    Note: May return fewer than 5 records if market was closed (holidays/weekends).
+    The detect_price_drop_alert() function requires at least 2 records to calculate
+    a price change percentage.
+    
     Args:
         ticker: Stock ticker symbol (default: 'AAPL')
         api_key: Massive.com API key (optional, defaults to env variable POLYGON_API_KEY)
@@ -474,10 +478,10 @@ def detect_price_drop_alert(ticker: str = 'AAPL') -> Dict[str, Any]:
     
     prices = state['prices']
     
-    # Check minimum data points requirement
-    if not isinstance(prices, list) or len(prices) < 5:
+    # Check minimum data points requirement (need at least 2 to compare first vs last)
+    if not isinstance(prices, list) or len(prices) < 2:
         reason = "insufficient_data"
-        log.warning(f"Insufficient price data: {len(prices) if isinstance(prices, list) else 0} points (minimum 5 required)")
+        log.warning(f"Insufficient price data: {len(prices) if isinstance(prices, list) else 0} points (minimum 2 required)")
         return {
             'alert_triggered': False,
             'price_first_close': 0.0,

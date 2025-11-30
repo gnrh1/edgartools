@@ -334,7 +334,13 @@ def main() -> int:
     log("=" * 60)
     log(f"Start time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
     
-    # Step 0: Load config
+    # Step 0a: Set SEC User-Agent identity (required for SEC API access)
+    from edgar import set_identity, get_identity
+    identity = get_identity()
+    set_identity(identity)
+    log(f"SEC User-Agent set to: {identity}")
+    
+    # Step 0b: Load config
     try:
         tickers = load_tickers_config()
         log(f"Loaded {len(tickers)} tickers from config: {', '.join(tickers)}")
