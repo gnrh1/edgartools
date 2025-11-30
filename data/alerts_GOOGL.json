@@ -1,8 +1,7 @@
 {
-  "alert_triggered": false,
-  "price_first_close": 318.58,
-  "price_last_close": 320.18,
-  "drop_percentage": -0.5022286395881796,
-  "reason": "price_change_-0.50%",
-  "filing_context": []
+  "alert_triggered": true,
+  "price_first_close": 140.0,
+  "price_last_close": 130.0,
+  "drop_percentage": 7.142857142857142,
+  "reason": "price_drop_7.14%"
 }

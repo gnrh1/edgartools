@@ -53,7 +53,7 @@ class TestSECFilingFetcher:
         
         # Verify Company was called correctly
         mock_company_class.assert_called_once_with('AAPL')
-        mock_company.get_filings.assert_called_once_with(form_type='8-K', trigger_full_load=False)
+        mock_company.get_filings.assert_called_once_with(form='8-K', trigger_full_load=False)
 
     @patch('edgar.sec_filings.Company')
     def test_fetch_multiple_form_types(self, mock_company_class):
@@ -73,12 +73,12 @@ class TestSECFilingFetcher:
         mock_10q.item_1a_risk_factors = "Quarterly earnings report"
         
         # Mock get_filings to return different results for each form type
-        def side_effect(form_type=None, **kwargs):
-            if form_type == '8-K':
+        def side_effect(form=None, **kwargs):
+            if form == '8-K':
                 mock_filings = MagicMock()
                 mock_filings.__iter__ = Mock(return_value=iter([mock_8k]))
                 return mock_filings
-            elif form_type == '10-Q':
+            elif form == '10-Q':
                 mock_filings = MagicMock()
                 mock_filings.__iter__ = Mock(return_value=iter([mock_10q]))
                 return mock_filings
@@ -100,8 +100,8 @@ class TestSECFilingFetcher:
         
         # Verify Company was called correctly
         mock_company_class.assert_called_once_with('AAPL')
-        mock_company.get_filings.assert_any_call(form_type='8-K', trigger_full_load=False)
-        mock_company.get_filings.assert_any_call(form_type='10-Q', trigger_full_load=False)
+        mock_company.get_filings.assert_any_call(form='8-K', trigger_full_load=False)
+        mock_company.get_filings.assert_any_call(form='10-Q', trigger_full_load=False)
 
     @patch('edgar.sec_filings.Company')
     def test_fetch_no_filings_found(self, mock_company_class):
