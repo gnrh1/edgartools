@@ -3,5 +3,23 @@
   "price_first_close": 380.0,
   "price_last_close": 360.0,
   "drop_percentage": 5.263157894736842,
-  "reason": "price_drop_5.26%"
+  "reason": "price_drop_5.26%",
+  "filing_context": [
+    {
+      "form_type": "8-K",
+      "filed_date": "2025-11-28",
+      "key_points": ["8-K: Officer changes", "Financial performance"],
+      "summary": "Microsoft Corporation announced changes in executive leadership and reported quarterly earnings guidance.",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/0001193125-25-123456.txt",
+      "relevance_score": 0.85
+    },
+    {
+      "form_type": "10-Q",
+      "filed_date": "2025-11-25",
+      "key_points": ["10-Q: Financial performance"],
+      "summary": "Quarterly report showing revenue growth and cloud services performance.",
+      "url": "https://www.sec.gov/Archives/edgar/data/789019/0001193125-25-234567.txt",
+      "relevance_score": 0.65
+    }
+  ]
 }
