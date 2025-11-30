@@ -24,6 +24,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
+import pandas as pd
 from dataclasses import dataclass, asdict
 
 from edgar.core import get_identity, set_identity
@@ -180,17 +181,47 @@ def extract_xbrl_value(statement: Any, concepts: List[str], period: str = None) 
         
         # Try each concept
         for concept in concepts:
-            # Try to find the concept in the index or columns
-            if concept in df.index:
+            # Normalize concept (replace : with _) as edgar-tools uses underscores
+            normalized_concept = concept.replace(':', '_')
+            
+            # Check if concept column exists
+            if 'concept' in df.columns:
+                # Find row matching the concept
+                match = df[df['concept'] == normalized_concept]
+                if not match.empty:
+                    # Get the first match
+                    row = match.iloc[0]
+                    
+                    # Find date columns (columns that are not metadata)
+                    # Metadata columns usually include: concept, label, level, abstract, dimension
+                    metadata_cols = ['concept', 'label', 'level', 'abstract', 'dimension']
+                    date_cols = [c for c in df.columns if c not in metadata_cols]
+                    
+                    # Sort date columns to get the most recent one? 
+                    # Actually, edgar-tools usually puts most recent first, but let's be safe.
+                    # But the columns are strings 'YYYY-MM-DD'.
+                    # Let's just iterate through date columns and take the first non-null value
+                    
+                    for date_col in date_cols:
+                        val = row[date_col]
+                        # Check if valid number
+                        if pd.notna(val) and isinstance(val, (int, float, str)):
+                            try:
+                                return float(val)
+                            except (ValueError, TypeError):
+                                continue
+            
+            # Fallback for index-based (if behavior changes or for other libraries)
+            elif concept in df.index:
                 values = df.loc[concept]
                 if isinstance(values, (int, float)):
                     return float(values)
-                # If multiple columns, get the most recent non-null value
                 if hasattr(values, 'dropna'):
                     values = values.dropna()
                     if len(values) > 0:
                         return float(values.iloc[-1] if hasattr(values, 'iloc') else values[-1])
         
+        # If we get here, we failed to find any concept
         return None
     except Exception as e:
         log.debug(f"Error extracting XBRL value: {e}")
@@ -345,7 +376,11 @@ def extract_roic_history(ticker: str, years: int = 5) -> ROICData:
                 roic = nopat / invested_capital
                 
                 # Extract year from filing date
-                year = int(filing.filing_date.split('-')[0])
+                # filing.filing_date is a string in some versions, date in others
+                if isinstance(filing.filing_date, str):
+                    year = int(filing.filing_date.split('-')[0])
+                else:
+                    year = filing.filing_date.year
                 
                 roic_years.append(year)
                 roic_values.append(roic)

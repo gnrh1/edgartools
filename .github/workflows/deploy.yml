@@ -32,6 +32,7 @@ jobs:
           # Copy only the necessary data files to avoid large upload
           cp data/prices_*.json dist/data/
           cp data/alerts_*.json dist/data/
+          cp data/financial_cache_*.json dist/data/
           ls -R dist/
 
       - name: Upload artifact

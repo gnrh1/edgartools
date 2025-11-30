@@ -140,6 +140,49 @@ def enrich_with_sec_filings(tickers: list) -> bool:
         return False
 
 
+def analyze_financials(tickers: list) -> bool:
+    """Execute Task 4: Analyze financials (ROIC, WACC, Spread) for all monitored tickers."""
+    log("=" * 60)
+    log(f"TASK 4: Analyzing financials for {len(tickers)} tickers")
+    log("=" * 60)
+    
+    try:
+        from pipeline.financial_analyzer import calculate_spread, FinancialDataError
+        
+        successful = 0
+        failed = 0
+        
+        for ticker in tickers:
+            log(f"\nAnalyzing financials for {ticker}...")
+            try:
+                # Calculate spread (this also calculates ROIC and WACC and caches everything)
+                result = calculate_spread(ticker)
+                
+                log(f"  - Current Spread: {result.current_spread:.2%}")
+                log(f"  - Trend: {result.spread_trend}")
+                log(f"  - Durability: {result.durability_assessment}")
+                
+                successful += 1
+                
+            except FinancialDataError as e:
+                log(f"✗ Failed to analyze {ticker}: {e}", "WARNING")
+                failed += 1
+            except Exception as e:
+                log(f"✗ Unexpected error for {ticker}: {e}", "WARNING")
+                failed += 1
+        
+        log(f"\nFinancial analysis summary:")
+        log(f"  - Successful: {successful}/{len(tickers)}")
+        log(f"  - Failed: {failed}/{len(tickers)}")
+        
+        # Consider it successful if at least one ticker succeeded
+        return successful > 0
+        
+    except Exception as e:
+        log(f"Failed to analyze financials: {e}", "ERROR")
+        return False
+
+
 def validate_outputs(tickers: list) -> bool:
     """Validate that output files exist for all tickers and contain valid JSON."""
     log("=" * 60)
@@ -247,9 +290,27 @@ def validate_outputs(tickers: list) -> bool:
         except json.JSONDecodeError as e:
             log(f"  ERROR: alerts file is not valid JSON: {e}", "ERROR")
             all_valid = False
-        except Exception as e:
             log(f"  ERROR: Failed to read alerts file: {e}", "ERROR")
             all_valid = False
+
+        # Check financial cache file (Phase 4)
+        from pipeline.financial_analyzer import get_cache_path as get_financial_cache_path
+        financial_path = get_financial_cache_path(ticker)
+        
+        if not financial_path.exists():
+            log(f"  WARNING: {financial_path} does not exist (Financial analysis might have failed)", "WARNING")
+            # Don't fail validation yet as this is a new feature
+        else:
+            try:
+                with open(financial_path, 'r') as f:
+                    fin_data = json.load(f)
+                
+                if 'spread_result' in fin_data:
+                    log(f"  ✓ financial cache valid (Spread: {fin_data['spread_result'].get('current_spread', 0):.2%})")
+                else:
+                    log(f"  WARNING: financial cache missing 'spread_result'", "WARNING")
+            except Exception as e:
+                log(f"  WARNING: Failed to read financial cache: {e}", "WARNING")
     
     if all_valid:
         log("\nOutput validation passed")
@@ -286,6 +347,7 @@ def git_commit(tickers: list) -> bool:
         for ticker in tickers:
             data_files.append(f"data/prices_{ticker}.json")
             data_files.append(f"data/alerts_{ticker}.json")
+            data_files.append(f"data/financial_cache_{ticker}.json")
         
         subprocess.run(
             ["git", "add"] + data_files,
@@ -368,7 +430,12 @@ def main() -> int:
         log("Pipeline failed: SEC filing enrichment failed", "ERROR")
         return 1
     
-    # Step 5: Validate outputs
+    # Step 5: Analyze financials (Phase 4 - Pillar 1)
+    if not analyze_financials(tickers):
+        log("Pipeline failed: Financial analysis failed", "ERROR")
+        return 1
+    
+    # Step 6: Validate outputs
     if not validate_outputs(tickers):
         log("Pipeline failed: Output validation failed", "ERROR")
         return 1

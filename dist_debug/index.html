@@ -265,20 +265,9 @@
                     try {
                         const pricesUrl = `${DATA_BASE_URL}/prices_${ticker}.json`;
                         const alertsUrl = `${DATA_BASE_URL}/alerts_${ticker}.json`;
-                        const financialsUrl = `${DATA_BASE_URL}/financial_cache_${ticker}.json`;
 
                         const pricesResponse = await fetch(pricesUrl);
                         const alertsResponse = await fetch(alertsUrl);
-                        // Financials might not exist for all tickers yet, so handle gracefully
-                        let financialsData = null;
-                        try {
-                            const financialsResponse = await fetch(financialsUrl);
-                            if (financialsResponse.ok) {
-                                financialsData = await financialsResponse.json();
-                            }
-                        } catch (e) {
-                            console.warn(`Could not load financials for ${ticker}:`, e);
-                        }
 
                         if (!pricesResponse.ok) {
                             throw new Error(`Prices 404: ${pricesUrl}`);
@@ -290,7 +279,7 @@
                         const pricesData = await pricesResponse.json();
                         const alertsData = await alertsResponse.json();
 
-                        const card = createStockCard(ticker, pricesData, alertsData, financialsData);
+                        const card = createStockCard(ticker, pricesData, alertsData);
                         grid.appendChild(card);
                         loadedCount++;
 
@@ -321,10 +310,9 @@
             }
         }
 
-        function createStockCard(ticker, pricesData, alertsData, financialsData) {
+        function createStockCard(ticker, pricesData, alertsData) {
             const card = document.createElement('div');
-            const alertTriggered = alertsData.alert_triggered || false;
-            card.className = `stock-card ${alertTriggered ? 'alert' : ''}`;
+            card.className = 'stock-card';
 
             const prices = pricesData.prices || [];
 
@@ -345,46 +333,19 @@
             const firstPrice = sortedPrices[0].close;
             const lastPrice = sortedPrices[sortedPrices.length - 1].close;
             const dropPercentage = alertsData.drop_percentage || 0;
+            const alertTriggered = alertsData.alert_triggered || false;
 
-            // Prepare Financial Context HTML
-            let financialHtml = '';
-            if (financialsData && financialsData.spread_result) {
-                const spread = financialsData.spread_result;
-                const currentSpread = (spread.current_spread * 100).toFixed(2);
-                const roic = (spread.roic_data.roic_values[spread.roic_data.roic_values.length - 1] * 100).toFixed(2);
-                const wacc = (spread.wacc_result.baseline_wacc * 100).toFixed(2);
-                const durability = spread.durability_assessment.toUpperCase();
-                const trend = spread.spread_trend;
-
-                let durabilityColor = '#888';
-                if (durability === 'STRONG') durabilityColor = '#4caf50';
-                if (durability === 'WEAK') durabilityColor = '#f44336';
-                if (durability === 'UNCERTAIN') durabilityColor = '#ff9800';
-
-                financialHtml = `
-                    <div class="financial-section" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <div style="font-size: 0.9rem; color: #aaa; margin-bottom: 8px;">🛡️ MOAT HEALTH</div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                            <div>
-                                <div style="font-size: 0.8rem; color: #888;">ROIC</div>
-                                <div style="font-size: 1.1rem; color: #4caf50;">${roic}%</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.8rem; color: #888;">WACC</div>
-                                <div style="font-size: 1.1rem; color: #ff9800;">${wacc}%</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.8rem; color: #888;">SPREAD</div>
-                                <div style="font-size: 1.1rem; font-weight: bold; color: ${currentSpread > 0 ? '#4caf50' : '#f44336'};">${currentSpread}%</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.8rem; display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px;">
-                            <span>Signal: <strong style="color: ${durabilityColor}">${durability}</strong></span>
-                            <span>Trend: <strong style="text-transform: capitalize;">${trend}</strong></span>
-                        </div>
-                    </div>
-                `;
-            }
+            const lastUpdate = pricesData.last_fetch_timestamp
+                ? new Date(pricesData.last_fetch_timestamp).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'UTC',
+                    timeZoneName: 'short'
+                })
+                : 'Unknown';
 
             card.innerHTML = `
                 <div class="card-header">
@@ -415,8 +376,6 @@
                         ${dropPercentage >= 0 ? '▼' : '▲'} ${Math.abs(dropPercentage).toFixed(2)}%
                     </div>
                 </div>
-                
-                ${financialHtml}
 
                 <!-- SEC Filing Context -->
                 ${alertsData.filing_context && alertsData.filing_context.length > 0 ? `
@@ -436,11 +395,20 @@
                         </ul>
                     </div>
                 ` : ''}
+
+                <div class="metadata">
+                    <div><strong>Last updated:</strong> ${lastUpdate}</div>
+                    <div><strong>Data points:</strong> ${prices.length}</div>
+                    ${alertTriggered ? `
+                        <div style="margin-top: 10px; color: #e53e3e; font-weight: bold;">
+                            ⚠️ Price dropped ${dropPercentage.toFixed(2)}% (threshold: 5%)
+                        </div>
+                    ` : ''}
+                </div>
             `;
 
             return card;
         }
-
 
         function displayError(message) {
             const content = document.getElementById('content');
