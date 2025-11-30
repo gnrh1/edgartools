@@ -403,7 +403,7 @@ def get_xbrl_by_filing():
         else:
             # Otherwise, search for a filing
             company = Company(ticker, cik)
-            filings = company.get_filings(form_type=form, year=year)
+            filings = company.get_filings(form=form, year=year)
             if not filings:
                 raise ValueError(f"No {form} filings found for {ticker or cik} in {year}")
             filing = filings[0]

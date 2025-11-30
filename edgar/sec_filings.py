@@ -53,7 +53,7 @@ def fetch_recent_filings(ticker: str, days_back: int = 2, form_types: List[str] 
     for form_type in form_types:
         try:
             # Get filings for this form type
-            form_filings = company.get_filings(form_type=form_type, trigger_full_load=False)
+            form_filings = company.get_filings(form=form_type, trigger_full_load=False)
             
             # Process each filing
             for filing in form_filings:
