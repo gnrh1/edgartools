@@ -15,5 +15,3 @@ data/.DS_Store
 **/**/**/.DS_Store
 CLAUDE.md
 internal/*
-# Financial analyzer cache files
-data/financial_cache_*.json

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `edgar.financial_analyzer` module extracts ROIC (Return on Invested Capital), calculates WACC (Weighted Average Cost of Capital), and computes the spread (ROIC - WACC) from SEC 10-K filings.
+The `pipeline.financial_analyzer` module extracts ROIC (Return on Invested Capital), calculates WACC (Weighted Average Cost of Capital), and computes the spread (ROIC - WACC) from SEC 10-K filings.
 
 **Status**: ✅ Production Ready (Phase 4 Pillar 1 Complete)
 
@@ -18,7 +18,7 @@ The module is already included in the edgartools package. No additional installa
 
 ```python
 from edgar.core import set_identity
-from edgar.financial_analyzer import calculate_spread
+from pipeline.financial_analyzer import calculate_spread
 
 # Set SEC User-Agent (required)
 set_identity("Your Name your.email@example.com")
@@ -40,7 +40,7 @@ print(f"Durability: {spread.durability_assessment}")
 Extract historical Return on Invested Capital.
 
 ```python
-from edgar.financial_analyzer import extract_roic_history
+from pipeline.financial_analyzer import extract_roic_history
 
 roic_data = extract_roic_history('AAPL', years=5)
 
@@ -53,7 +53,7 @@ for year, roic in zip(roic_data.years, roic_data.roic_values):
 Calculate Weighted Average Cost of Capital.
 
 ```python
-from edgar.financial_analyzer import calculate_wacc
+from pipeline.financial_analyzer import calculate_wacc
 
 # Basic WACC
 wacc = calculate_wacc('AAPL')
@@ -74,7 +74,7 @@ wacc = calculate_wacc('AAPL', overrides={'beta': 1.2, 'risk_free_rate': 0.045})
 Calculate ROIC-WACC spread with trend analysis.
 
 ```python
-from edgar.financial_analyzer import calculate_spread
+from pipeline.financial_analyzer import calculate_spread
 
 spread = calculate_spread('AAPL', years=5)
 

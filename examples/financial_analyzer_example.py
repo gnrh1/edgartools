@@ -7,7 +7,7 @@ the ROIC-WACC spread for portfolio stocks.
 """
 
 from edgar.core import set_identity
-from edgar.financial_analyzer import (
+from pipeline.financial_analyzer import (
     extract_roic_history,
     extract_wacc_components,
     calculate_wacc,

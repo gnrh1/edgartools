@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Ensure module can be imported
 try:
-    from edgar.financial_analyzer import (
+    from pipeline.financial_analyzer import (
         extract_roic_history,
         extract_wacc_components,
         calculate_wacc,
@@ -134,7 +134,7 @@ except Exception as e:
 print("\n=== Cache System ===")
 
 try:
-    from edgar.financial_analyzer import get_cache_path
+    from pipeline.financial_analyzer import get_cache_path
     
     cache_path = get_cache_path('AAPL')
     assert 'financial_cache_AAPL.json' in str(cache_path)

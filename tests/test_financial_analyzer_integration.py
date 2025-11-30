@@ -15,10 +15,10 @@ import sys
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from edgar.core import set_identity, get_identity
-from edgar.financial_analyzer import (
+from pipeline.financial_analyzer import (
     extract_roic_history,
     extract_wacc_components,
     calculate_wacc,
