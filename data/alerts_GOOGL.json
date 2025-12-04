@@ -1,9 +1,9 @@
 {
   "alert_triggered": false,
-  "price_first_close": 323.44,
-  "price_last_close": 319.95,
-  "drop_percentage": 1.0790254761315883,
-  "reason": "price_change_1.08%",
+  "price_first_close": 320.18,
+  "price_last_close": 319.63,
+  "drop_percentage": 0.1717783746642549,
+  "reason": "price_change_0.17%",
   "filing_context": [
     {
       "form_type": "8-K",
@@ -22,11 +22,11 @@
       "relevance_score": 0.0
     },
     {
-      "form_type": "8-K",
-      "filed_date": "2025-09-05",
+      "form_type": "10-Q",
+      "filed_date": "2025-10-30",
       "key_points": [],
       "summary": "No summary available",
-      "url": "https://www.sec.gov/Archives/edgar/data/1652044/0001652044-25-000074-index.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1652044/0001652044-25-000091-index.html",
       "relevance_score": 0.0
     }
   ]
